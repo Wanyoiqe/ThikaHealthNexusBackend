@@ -1,0 +1,51 @@
+{
+  "users": [
+    {
+      "user_id": "a1f3e1c2-3d4b-4c58-bb9e-1a2f3e456789",
+      "first_name": "Alice",
+      "last_name": "Wanjiku",
+      "email": "alice.wanjiku@example.com",
+      "password": "$2b$10$abcdef1234567890examplehash",
+      "phone_number": "+254712345678",
+      "is_deleted": false
+    },
+    {
+      "user_id": "b2e4f2d3-4a5c-5d69-cc0f-2b3f4f567890",
+      "first_name": "Brian",
+      "last_name": "Odhiambo",
+      "email": "brian.odhiambo@example.com",
+      "password": "$2b$10$123456abcdef7890examplehash",
+      "phone_number": "+254701234567",
+      "is_deleted": false
+    },
+    {
+      "user_id": "c3f5g3e4-5b6d-6e70-dd1g-3c4g5g678901",
+      "first_name": "Cynthia",
+      "last_name": "Mutheu",
+      "email": "cynthia.mutheu@example.com",
+      "password": "$2b$10$fedcba0987654321examplehash",
+      "phone_number": "+254799876543",
+      "is_deleted": false
+    }
+  ],
+  "products": [
+    {
+      "id": "d1f7a6b5-4c3d-4f59-a7b3-1d2e3f4g5h6i",
+      "name": "Wireless Mouse",
+      "detail": "Ergonomic wireless mouse with adjustable DPI and silent click technology.",
+      "is_deleted": false
+    },
+    {
+      "id": "e2g8b7c6-5d4e-5g60-b8c4-2e3f4g5h6i7j",
+      "name": "Mechanical Keyboard",
+      "detail": "RGB backlit mechanical keyboard with blue switches and customizable macros.",
+      "is_deleted": false
+    },
+    {
+      "id": "f3h9c8d7-6e5f-6h71-c9d5-3f4g5h6i7j8k",
+      "name": "27-inch Monitor",
+      "detail": "Full HD LED monitor with HDMI and DisplayPort support, ideal for gaming and design work.",
+      "is_deleted": false
+    }
+  ]
+}

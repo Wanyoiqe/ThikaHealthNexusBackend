@@ -1,0 +1,25 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "",
+    "database": "thikaHealthNexus",
+    "migrate": "FALSE"
+  },
+  "port": 5000,
+  "uploadsMask": "u0veDcqIsErQVKXuXeM3",
+  "uploadsDir": "../carsUploads",
+  "clientURL": "https://cars.sandbox.co.ke/",
+  "authSecret": "SilenceIsGolden",
+  "emailFrom": "info@cars.sandbox.co.ke",
+  "smtpOptions": {
+    "host": "192.53.162.150",
+    "port": 25,
+    "secure": true,
+    "auth": {
+      "user": "info@cars.sandbox.co.ke",
+      "pass": "SaKvp6WD"
+    }
+  }
+}
