@@ -7,18 +7,36 @@ module.exports = function(sequelize) {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
     role: {
       type: DataTypes.ENUM('admin', 'patient', 'provider'),
       allowNull: false,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true, 
+      allowNull: false,
+    },
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    phone_number: {
+      type: DataTypes.STRING(15),
+      allowNull: true,
     },
   });
 };

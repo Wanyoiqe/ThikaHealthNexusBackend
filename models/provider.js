@@ -1,5 +1,6 @@
 // Providers Model
 const { DataTypes } = require('sequelize');
+const { user } = require('../db');
 const ProviderModel = (sequelize) => {
   return sequelize.define('provider', {
     provider_id: {
@@ -20,6 +21,14 @@ const ProviderModel = (sequelize) => {
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    user_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: user,
+        key: 'user_id',
+      },
     },
     is_deleted: {
       type: DataTypes.BOOLEAN,

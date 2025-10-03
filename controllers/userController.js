@@ -1,6 +1,7 @@
 const { user } = require("../db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { sendOnboardingEmail } = require("../utils/onboardingEmail");
 
 // User Registration (Sign up)
 exports.registerUser = async (req, res, next) => {
@@ -111,4 +112,21 @@ exports.loginUser = async (req, res, next) => {
     console.error("Error logging in user:", err);
     return next(err);
   }
+};
+ 
+//test email
+exports.testEmail = async (req, res, next) => {
+  try {
+    const email = req.body.email;  
+    if (await sendOnboardingEmail(email)) {
+      return res.status(200).json({ message: "Email sent successfully" });
+    } else {
+      return res.status(500).json({ message: "Failed to send email" });
+    }
+  } catch (err) {
+    console.error("Error sending test email:", err);
+    return next(err);
+
+  }   
+  
 };
