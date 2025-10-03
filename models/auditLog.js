@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+
 // Audit Log Model
 const AuditLogModel = (sequelize) => {
   return sequelize.define('audit_log', {

@@ -1,6 +1,6 @@
 // Patients Model
 const { DataTypes } = require('sequelize');
-const { user } = require('../db');
+
 const PatientModel = (sequelize) => {
   return sequelize.define('patient', {
     patient_id: {
@@ -11,10 +11,6 @@ const PatientModel = (sequelize) => {
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: user,
-        key: 'user_id',
-      },
     },
     name: {
       type: DataTypes.STRING(100),

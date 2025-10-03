@@ -7,7 +7,11 @@ module.exports = function(sequelize) {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: {
+    first_name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    last_name: {
       type: DataTypes.STRING(100),
       allowNull: false,
     },
@@ -17,12 +21,13 @@ module.exports = function(sequelize) {
       unique: true,
     },
     role: {
-      type: DataTypes.ENUM('admin', 'patient', 'provider'),
+      type: DataTypes.ENUM('admin', 'patient', 'provider', 'receptionist', 'doctor'),
       allowNull: false,
+      defaultValue: 'patient',
     },
     isActive: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true, 
+      defaultValue: true,
       allowNull: false,
     },
     is_deleted: {
@@ -35,7 +40,7 @@ module.exports = function(sequelize) {
       allowNull: false,
     },
     phone_number: {
-      type: DataTypes.STRING(15),
+      type: DataTypes.STRING(20),
       allowNull: true,
     },
   });

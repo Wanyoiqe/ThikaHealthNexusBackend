@@ -11,6 +11,15 @@ const AppointmentModel = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
+    // foreign keys stored as UUIDs; associations created elsewhere
+    patient_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    provider_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('scheduled', 'completed', 'cancelled'),
       defaultValue: 'scheduled',
