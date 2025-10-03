@@ -1,4 +1,4 @@
-const { user } = require("../db");
+const { User, Patient } = require("../db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendOnboardingEmail } = require("../utils/onboardingEmail");
@@ -6,15 +6,18 @@ const { sendOnboardingEmail } = require("../utils/onboardingEmail");
 // User Registration (Sign up)
 exports.registerUser = async (req, res, next) => {
   try {
-    const { first_name, last_name, email, password, phone_number } = req.body;
+    const { first_name, last_name, email, password, phone_number, gender, role } = req.body;
+
+    // default role to 'patient' if not provided
+    const userRole = role || 'patient';
 
     // Check if user already exists
-    const existingUser = await user.findOne({ where: { email } });
+    const existingUser = await User.findOne({ where: { email } });
 
     if (existingUser && !existingUser.is_deleted) {
       return res.status(409).json({
         result_code: 0,
-        message: "User with this email already exists.",
+        message: 'User with this email already exists.',
       });
     }
 
@@ -30,27 +33,41 @@ exports.registerUser = async (req, res, next) => {
         phone_number,
         password: hashedPassword,
         is_deleted: false,
+        role: userRole,
       });
       newUser = existingUser;
     } else {
       // Create new user
-      newUser = await user.create({
+      newUser = await User.create({
         first_name,
         last_name,
         email,
         password: hashedPassword,
         phone_number,
+        role: userRole,
       });
     }
 
-    // Generate JWT Token
-    const token = jwt.sign(
-      { user_id: newUser.user_id },
-      process.env.AUTH_SECRET || "secretEncryptionKey",
-      { expiresIn: "1h" }
-    );
+    // If onboarding a patient, create a Patient record
+    if (userRole === 'patient') {
+      // combine names for patient.name
+      const name = `${first_name} ${last_name}`.trim();
+      // avoid duplicate patient entries
+      const existingPatient = await Patient.findOne({ where: { user_id: newUser.user_id } });
+      if (!existingPatient) {
+        await Patient.create({
+          user_id: newUser.user_id,
+          name,
+          gender: gender || null,
+          phone: phone_number || null,
+        });
+      }
+    }
 
-    // Append token to response
+    // Generate JWT Token
+    const token = jwt.sign({ user_id: newUser.user_id }, process.env.AUTH_SECRET || 'secretEncryptionKey', { expiresIn: '1h' });
+
+    // Append token to response (include role)
     const userWithToken = {
       ...newUser.toJSON(),
       token,
@@ -58,14 +75,11 @@ exports.registerUser = async (req, res, next) => {
 
     res.status(existingUser ? 200 : 201).json({
       result_code: 1,
-      message: existingUser
-        ? "User reactivated and registered successfully"
-        : "User registered successfully",
+      message: existingUser ? 'User reactivated and registered successfully' : 'User registered successfully',
       user: userWithToken,
     });
-
   } catch (err) {
-    console.error("Error registering user:", err);
+    console.error('Error registering user:', err);
     return next(err);
   }
 };
@@ -74,7 +88,7 @@ exports.registerUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const foundUser = await user.findOne({ where: { email } });
+    const foundUser = await User.findOne({ where: { email } });
     if (!foundUser || foundUser.is_deleted) {
       // Check if user is deleted
       return res
@@ -101,7 +115,7 @@ exports.loginUser = async (req, res, next) => {
       token,
     };
 
-    res
+    return res
       .status(200)
       .json({
         result_code: 1,
@@ -127,6 +141,5 @@ exports.testEmail = async (req, res, next) => {
     console.error("Error sending test email:", err);
     return next(err);
 
-  }   
-  
+  }
 };

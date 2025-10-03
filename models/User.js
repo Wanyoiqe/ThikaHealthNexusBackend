@@ -25,6 +25,10 @@ module.exports = function(sequelize) {
       allowNull: false,
       defaultValue: 'patient',
     },
+    profileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

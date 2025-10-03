@@ -27,6 +27,10 @@ const ProviderModel = (sequelize) => {
       type: DataTypes.UUID,
       allowNull: false,
     },
+    profileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     hospital_id: {
       type: DataTypes.UUID,
       allowNull: true,

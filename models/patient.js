@@ -28,6 +28,10 @@ const PatientModel = (sequelize) => {
     phone: {
       type: DataTypes.STRING(20),
     },
+    profileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   });
 };
 module.exports = { PatientModel };
