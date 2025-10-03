@@ -5,7 +5,7 @@
       "first_name": "Alice",
       "last_name": "Wanjiku",
       "email": "alice.wanjiku@example.com",
-      "password": "$2b$10$abcdef1234567890examplehash",
+      "password": "password",
       "phone_number": "+254712345678",
       "is_deleted": false
     },
@@ -14,7 +14,7 @@
       "first_name": "Brian",
       "last_name": "Odhiambo",
       "email": "brian.odhiambo@example.com",
-      "password": "$2b$10$123456abcdef7890examplehash",
+      "password": "password",
       "phone_number": "+254701234567",
       "is_deleted": false
     },
@@ -23,7 +23,7 @@
       "first_name": "Cynthia",
       "last_name": "Mutheu",
       "email": "cynthia.mutheu@example.com",
-      "password": "$2b$10$fedcba0987654321examplehash",
+      "password": "password",
       "phone_number": "+254799876543",
       "is_deleted": false
     }

@@ -1,4 +1,4 @@
-const { User, Patient } = require("../db");
+const { User, Patient } = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendOnboardingEmail } = require("../utils/onboardingEmail");
@@ -89,20 +89,22 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const foundUser = await User.findOne({ where: { email } });
-    if (!foundUser || foundUser.is_deleted) {
+    if (!foundUser) {
       // Check if user is deleted
-      return res
-        .status(401)
-        .json({
-          result_code: 0,
-          message: "Invalid credentials or user deleted.",
-        });
+      return res.status(401).json({
+        result_code: 0,
+        message: "Invalid credentials.",
+      });
+    }
+    if(foundUser.is_deleted){
+      return res.status(401).json({
+        result_code: 0,
+        message: "Account has been deactivated. Kindly contact admin.",
+      });
     }
     const isMatch = await bcrypt.compare(password, foundUser.password);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ result_code: 0, message: "Invalid credentials." });
+      return res.status(401).json({ result_code: 0, message: "Invalid credentials." });
     }
     const token = jwt.sign(
       { user_id: foundUser.user_id },
@@ -115,9 +117,7 @@ exports.loginUser = async (req, res, next) => {
       token,
     };
 
-    return res
-      .status(200)
-      .json({
+    return res.status(200).json({
         result_code: 1,
         message: "Login successful",
         user: userWithToken,

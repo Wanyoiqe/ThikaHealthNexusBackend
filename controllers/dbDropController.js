@@ -1,4 +1,4 @@
-const { sequelize } = require('../db');
+const { sequelize } = require('../models');
 
 module.exports.dbDrop = async (req, res, next) => {
   try {

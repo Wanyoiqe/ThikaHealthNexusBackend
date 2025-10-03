@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const configs = require('../config.json');
 const bcrypt = require('bcryptjs');
-// Import models from centralized db
-const { User, Provider } = require('../db');
+// Import models from centralized models index
+const { User, Provider } = require('../models');
 
 module.exports.seedData = async (req, res, next) => {
     try {

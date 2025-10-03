@@ -1,4 +1,4 @@
-const { Appointment, Provider, User } = require('../db');
+const { Appointment, Provider, User } = require('../models');
 const { Op } = require('sequelize');
 
 // Book appointment - patient books for themselves. req.user set by auth middleware.

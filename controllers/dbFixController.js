@@ -1,6 +1,5 @@
-// Use central db initialization instead of creating a separate Sequelize
-// instance here. This keeps associations and model instances consistent.
-const { sequelize, User, Patient, Provider, Hospital, Appointment, AuditLog, HealthRecord, Prescription } = require('../db');
+// Use centralized models (no associations here). We still reuse the Sequelize instance
+const { sequelize } = require('../models');
 
 module.exports.dbfix = async (req, res, next) => {
   try {
