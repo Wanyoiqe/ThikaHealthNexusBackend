@@ -27,25 +27,48 @@
       "phone_number": "+254799876543",
       "is_deleted": false
     }
+    ,
+    {
+      "user_id": "doc1-1111-2222-3333-444444444444",
+      "first_name": "Daniel",
+      "last_name": "Kamau",
+      "email": "daniel.kamau@hospital.example",
+      "password": "password",
+      "phone_number": "+254700111222",
+      "role": "doctor",
+      "is_deleted": false
+    },
+    {
+      "user_id": "doc2-5555-6666-7777-888888888888",
+      "first_name": "Emily",
+      "last_name": "Achieng",
+      "email": "emily.achieng@hospital.example",
+      "password": "password",
+      "phone_number": "+254700333444",
+      "role": "doctor",
+      "is_deleted": false
+    }
   ],
-  "products": [
+  "doctors": [
     {
-      "id": "d1f7a6b5-4c3d-4f59-a7b3-1d2e3f4g5h6i",
-      "name": "Wireless Mouse",
-      "detail": "Ergonomic wireless mouse with adjustable DPI and silent click technology.",
-      "is_deleted": false
+      "provider_id": "prov-doc1-0001-0001-0001",
+      "user_id": "doc1-1111-2222-3333-444444444444",
+      "name": "Dr Daniel Kamau",
+      "specialization": "General Medicine",
+      "phone": "+254700111222",
+      "department": "Outpatient",
+      "hospital_id": "hosp-1000-2000-3000",
+      "is_active": true
     },
     {
-      "id": "e2g8b7c6-5d4e-5g60-b8c4-2e3f4g5h6i7j",
-      "name": "Mechanical Keyboard",
-      "detail": "RGB backlit mechanical keyboard with blue switches and customizable macros.",
-      "is_deleted": false
-    },
-    {
-      "id": "f3h9c8d7-6e5f-6h71-c9d5-3f4g5h6i7j8k",
-      "name": "27-inch Monitor",
-      "detail": "Full HD LED monitor with HDMI and DisplayPort support, ideal for gaming and design work.",
-      "is_deleted": false
+      "provider_id": "prov-doc2-0002-0002-0002",
+      "user_id": "doc2-5555-6666-7777-888888888888",
+      "name": "Dr Emily Achieng",
+      "specialization": "Pediatrics",
+      "phone": "+254700333444",
+      "department": "Pediatrics",
+      "hospital_id": "hosp-1000-2000-3000",
+      "is_active": true
     }
   ]
 }

@@ -145,6 +145,43 @@ Each endpoint returns plain text confirming the action on success (200).
 
 ---
 
+## Appointments
+
+1) Book appointment (patient must be authenticated)
+
+Request
+
+```
+curl -i -X POST http://localhost:5000/api/appointments/book \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN_HERE>" \
+  -d '{ "date_time": "2025-10-10T10:00:00Z", "provider_id": "<PROVIDER_UUID>" }'
+```
+
+2) Get available doctors for a time window
+
+Request
+
+```
+curl -i -X POST http://localhost:5000/api/appointments/available \
+  -H "Content-Type: application/json" \
+  -d '{ "from": "2025-10-10T09:00:00Z", "to": "2025-10-10T12:00:00Z" }'
+```
+
+3) Get upcoming appointments (authenticated)
+
+```
+curl -i -H "Authorization: Bearer <JWT_TOKEN_HERE>" http://localhost:5000/api/appointments/upcoming
+```
+
+4) Get past appointments (authenticated)
+
+```
+curl -i -H "Authorization: Bearer <JWT_TOKEN_HERE>" http://localhost:5000/api/appointments/past
+```
+
+---
+
 ## Error behavior
 
 The app has a global error handler. Error responses typically include `result_code: 0` and a `message` field. Example:
