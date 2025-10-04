@@ -1,10 +1,10 @@
 {
   "database": {
-    "host": "localhost",
+    "host": "127.0.0.1",
     "port": 3306,
-    "user": "root",
-    "password": "",
-    "database": "thikaHealthNexus",
+    "user": "your_username",
+    "password": "your_user_password",
+    "database": "your_database_name",
     "migrate": "FALSE"
   },
   "port": 5000,

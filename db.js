@@ -2,6 +2,15 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const configs = require('./config.json');
 
+// Prefer environment variables (useful with docker-compose/.env). Fall back to config.json.
+const dbEnv = {
+  host: process.env.DB_HOST || process.env.MYSQL_HOST || configs.database.host || 'localhost',
+  port: process.env.DB_PORT || process.env.MYSQL_PORT || configs.database.port || 3306,
+  user: process.env.DB_USER || process.env.MYSQL_USER || configs.database.user,
+  password: process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || configs.database.password,
+  database: process.env.DB_NAME || process.env.MYSQL_DATABASE || configs.database.database,
+};
+
 // Model factories
 const UserModel = require('./models/User');
 const { PatientModel } = require('./models/patient');
@@ -13,14 +22,19 @@ const { HealthRecordModel } = require('./models/healthRecords');
 const { PrescriptionModel } = require('./models/prescription');
 
 const sequelize = new Sequelize(
-  configs.database.database,
-  configs.database.user,
-  configs.database.password,
+  dbEnv.database,
+  dbEnv.user,
+  dbEnv.password,
   {
-	host: configs.database.host || 'localhost',
-	dialect: 'mysql',
+    host: dbEnv.host,
+    port: dbEnv.port,
+    dialect: 'mysql',
+    logging: false,
   }
 );
+
+// Helpful (non-sensitive) startup log to aid debugging. Do not print password.
+console.log(`DB -> host=${dbEnv.host} port=${dbEnv.port} database=${dbEnv.database} user=${dbEnv.user}`);
 
 // Initialize models
 const User = UserModel(sequelize);

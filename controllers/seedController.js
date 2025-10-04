@@ -3,7 +3,7 @@ const path = require('path');
 const configs = require('../config.json');
 const bcrypt = require('bcryptjs');
 // Import models from centralized db
-const { User, Provider } = require('../db');
+const { User, Provider, Hospital } = require('../db');
 
 module.exports.seedData = async (req, res, next) => {
     try {
@@ -12,12 +12,6 @@ module.exports.seedData = async (req, res, next) => {
         const data = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
 
         console.log('Starting data seeding...');
-
-        // Clear existing data in a specific order to avoid foreign key constraints issues
-        // Note: For a production environment, consider a more robust migration/seeding strategy.
-        // For testing/development, dropping tables before seeding might be necessary if IDs conflict.
-        // However, if you're relying on `db.fix` to `alter: true`, existing data might persist.
-        // For a clean seed, you might want to run db.drop first, then db.fix, then seed.
 
         // Seed Users
         if (data.users && data.users.length > 0) {
@@ -49,8 +43,8 @@ module.exports.seedData = async (req, res, next) => {
             console.log('Users seeded successfully.');
         }
 
-        // Seed doctors/providers: allow `data.doctors` or infer from users with role 'doctor'
-        const doctors = data.doctors || [];
+    // Seed doctors/providers: allow `data.doctors` or infer from users with role 'doctor'
+    const doctors = data.doctors ? [...data.doctors] : [];
         // Infer doctors from users
         const doctorUsers = await User.findAll({ where: { role: 'doctor' } });
         for (const du of doctorUsers) {
@@ -64,6 +58,26 @@ module.exports.seedData = async (req, res, next) => {
         }
 
         if (doctors.length > 0) {
+            // Ensure referenced hospitals exist to avoid FK constraint errors
+            const hospitalIds = new Set();
+            for (const d of doctors) {
+                if (d.hospital_id) hospitalIds.add(d.hospital_id);
+            }
+
+            for (const hid of hospitalIds) {
+                // Create a minimal hospital record if it does not exist
+                await Hospital.findOrCreate({
+                    where: { hospital_id: hid },
+                    defaults: {
+                        hospital_id: hid,
+                        name: `Imported Hospital ${hid}`,
+                        phone: null,
+                        location: null,
+                    },
+                });
+                console.log(`Ensured hospital ${hid} exists`);
+            }
+
             for (const d of doctors) {
                 await Provider.findOrCreate({
                     where: { user_id: d.user_id },
