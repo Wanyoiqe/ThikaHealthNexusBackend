@@ -143,6 +143,39 @@ exports.getUpcoming = async (req, res, next) => {
   }
 };
 
+// Get all appointments for authenticated user
+// Get All appointments for the authenticated user (future)
+exports.getAllAppointments = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
+
+    const now = new Date();
+    const appts = await Appointment.findAll({ where: { patient_id: userId }, order: [['date_time', 'ASC']] });
+
+    // Batch fetch provider details to avoid N+1 queries
+    const providerIds = Array.from(new Set(appts.map(a => a.provider_id).filter(Boolean)));
+    let providerMap = {};
+    if (providerIds.length) {
+      const providers = await Provider.findAll({ where: { provider_id: providerIds } });
+      providerMap = providers.reduce((acc, p) => {
+        acc[p.provider_id] = shapeProvider(p);
+        return acc;
+      }, {});
+    }
+
+    const enriched = appts.map((a) => {
+      const json = a.toJSON();
+      json.provider = json.provider_id ? providerMap[json.provider_id] || null : null;
+      return json;
+    });
+
+    return res.status(200).json({ result_code: 1, appointments: enriched });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 // Get past appointments for authenticated user
 exports.getPast = async (req, res, next) => {
   try {
