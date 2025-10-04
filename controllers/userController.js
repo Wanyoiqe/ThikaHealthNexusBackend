@@ -2,6 +2,7 @@ const { User, Patient } = require("../db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendOnboardingEmail } = require("../utils/onboardingEmail");
+const { generateToken } = require("../middlewares/authMiddleware");
 
 // User Registration (Sign up)
 exports.registerUser = async (req, res, next) => {
@@ -65,7 +66,7 @@ exports.registerUser = async (req, res, next) => {
     }
 
     // Generate JWT Token
-    const token = jwt.sign({ user_id: newUser.user_id }, process.env.AUTH_SECRET || 'secretEncryptionKey', { expiresIn: '1h' });
+    const token = generateToken(newUser);
 
     // Append token to response (include role)
     const userWithToken = {
@@ -104,20 +105,14 @@ exports.loginUser = async (req, res, next) => {
         .status(401)
         .json({ result_code: 0, message: "Invalid credentials." });
     }
-    const token = jwt.sign(
-      { user_id: foundUser.user_id },
-      process.env.AUTH_SECRET || "secretEncryptionKey",
-      { expiresIn: "1h" }
-    );
+    const token = generateToken(foundUser);
     // Include token in the user object
     const userWithToken = {
       ...foundUser.toJSON(),
       token,
     };
 
-    return res
-      .status(200)
-      .json({
+    return res.status(200).json({
         result_code: 1,
         message: "Login successful",
         user: userWithToken,
