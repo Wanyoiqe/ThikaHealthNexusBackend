@@ -2,43 +2,83 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const configs = require('./config.json');
 
-const UserModel  = require('./models/User');
-
+// Model factories
+const UserModel = require('./models/User');
+const { PatientModel } = require('./models/patient');
+const { ProviderModel } = require('./models/provider');
+const { HospitalModel } = require('./models/hospital');
+const { AppointmentModel } = require('./models/appointment');
+const { AuditLogModel } = require('./models/auditLog');
+const { HealthRecordModel } = require('./models/healthRecords');
+const { PrescriptionModel } = require('./models/prescription');
 
 const sequelize = new Sequelize(
-	configs.database.database,
-	configs.database.user,
-	configs.database.password,
-	{
-		host: 'localhost',
-		dialect: 'mysql',
-	}
+  configs.database.database,
+  configs.database.user,
+  configs.database.password,
+  {
+	host: configs.database.host || 'localhost',
+	dialect: 'mysql',
+  }
 );
 
-const db = sequelize;
-const dbHelper = sequelize;
+// Initialize models
+const User = UserModel(sequelize);
+const Patient = PatientModel(sequelize);
+const Provider = ProviderModel(sequelize);
+const Hospital = HospitalModel(sequelize);
+const Appointment = AppointmentModel(sequelize);
+const AuditLog = AuditLogModel(sequelize);
+const HealthRecord = HealthRecordModel(sequelize);
+const Prescription = PrescriptionModel(sequelize);
 
-const user = UserModel(sequelize);
+// Define associations centrally
+// Users ↔ Patients / Providers
+User.hasOne(Patient, { foreignKey: 'user_id' });
+Patient.belongsTo(User, { foreignKey: 'user_id' });
 
-(async () => {
-	try {
-		await sequelize.authenticate();
-		console.log('✅ Database connection has been established successfully.');
-	} catch (error) {
-		console.error('Unable to connect to the database:', error);
-	}
-})();
+User.hasOne(Provider, { foreignKey: 'user_id' });
+Provider.belongsTo(User, { foreignKey: 'user_id' });
 
-const migrateDb = process.env.MIGRATE_DB || configs.database.migrate;
-if (migrateDb === 'TRUE') {
-	sequelize.sync({ alter: true }).then(() => {
-		console.log(`All tables synced!`);
-		process.exit(0);
-	});
-}
+// Hospitals ↔ Patients / Providers
+Hospital.hasMany(Patient, { foreignKey: 'hospital_id' });
+Patient.belongsTo(Hospital, { foreignKey: 'hospital_id' });
 
+Hospital.hasMany(Provider, { foreignKey: 'hospital_id' });
+Provider.belongsTo(Hospital, { foreignKey: 'hospital_id' });
+
+// Patients ↔ HealthRecords
+Patient.hasMany(HealthRecord, { foreignKey: 'patient_id' });
+HealthRecord.belongsTo(Patient, { foreignKey: 'patient_id' });
+
+// Appointments ↔ Patients & Providers
+Patient.hasMany(Appointment, { foreignKey: 'patient_id' });
+Appointment.belongsTo(Patient, { foreignKey: 'patient_id' });
+
+Provider.hasMany(Appointment, { foreignKey: 'provider_id' });
+Appointment.belongsTo(Provider, { foreignKey: 'provider_id' });
+
+// Prescriptions ↔ HealthRecords & Providers
+HealthRecord.hasMany(Prescription, { foreignKey: 'record_id' });
+Prescription.belongsTo(HealthRecord, { foreignKey: 'record_id' });
+
+Provider.hasMany(Prescription, { foreignKey: 'provider_id' });
+Prescription.belongsTo(Provider, { foreignKey: 'provider_id' });
+
+// Audit Log ↔ Users
+User.hasMany(AuditLog, { foreignKey: 'user_id' });
+AuditLog.belongsTo(User, { foreignKey: 'user_id' });
+
+// Export models and sequelize
 module.exports = {
-    user,
-	db,
-    dbHelper,
+  sequelize,
+  Sequelize,
+  User,
+  Patient,
+  Provider,
+  Hospital,
+  Appointment,
+  AuditLog,
+  HealthRecord,
+  Prescription,
 };

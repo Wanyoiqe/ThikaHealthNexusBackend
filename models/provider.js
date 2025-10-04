@@ -1,5 +1,7 @@
 // Providers Model
 const { DataTypes } = require('sequelize');
+
+// Pure factory - associations are defined centrally in db.js
 const ProviderModel = (sequelize) => {
   return sequelize.define('provider', {
     provider_id: {
@@ -20,6 +22,18 @@ const ProviderModel = (sequelize) => {
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    user_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    profileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    hospital_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     is_deleted: {
       type: DataTypes.BOOLEAN,

@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+
 // Health Records Model
 const HealthRecordModel = (sequelize) => {
   return sequelize.define('health_record', {
@@ -13,10 +14,22 @@ const HealthRecordModel = (sequelize) => {
     treatment: {
       type: DataTypes.TEXT,
     },
+    notes: {
+      type: DataTypes.TEXT,
+    },
+    patient_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    provider_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
   });
 };
+
 module.exports = { HealthRecordModel };

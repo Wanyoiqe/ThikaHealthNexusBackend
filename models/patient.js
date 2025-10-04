@@ -1,11 +1,16 @@
 // Patients Model
 const { DataTypes } = require('sequelize');
+
 const PatientModel = (sequelize) => {
   return sequelize.define('patient', {
     patient_id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
+    },
+    user_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING(100),
@@ -22,6 +27,10 @@ const PatientModel = (sequelize) => {
     },
     phone: {
       type: DataTypes.STRING(20),
+    },
+    profileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   });
 };

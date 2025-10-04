@@ -2,21 +2,24 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const morgan = require('morgan');
 const http = require('http');
 const configs = require('./config.json');
 
 // Routes
 const dbRoute = require('./routes/dbRoute');
 const userRoutes = require('./routes/userRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 
 
 const app = express();
 
 app.use(helmet());
 app.use(cors());
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use([dbRoute, userRoutes]);
+app.use([dbRoute, userRoutes,appointmentRoutes]);
 
 // 404 error handling
 app.post('*', function (req, res) { // Changed to POST for consistency
