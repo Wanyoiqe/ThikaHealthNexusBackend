@@ -46,42 +46,6 @@ const AuditLog = AuditLogModel(sequelize);
 const HealthRecord = HealthRecordModel(sequelize);
 const Prescription = PrescriptionModel(sequelize);
 
-// Define associations centrally
-// Users ↔ Patients / Providers
-User.hasOne(Patient, { foreignKey: 'user_id' });
-Patient.belongsTo(User, { foreignKey: 'user_id' });
-
-User.hasOne(Provider, { foreignKey: 'user_id' });
-Provider.belongsTo(User, { foreignKey: 'user_id' });
-
-// Hospitals ↔ Patients / Providers
-Hospital.hasMany(Patient, { foreignKey: 'hospital_id' });
-Patient.belongsTo(Hospital, { foreignKey: 'hospital_id' });
-
-Hospital.hasMany(Provider, { foreignKey: 'hospital_id' });
-Provider.belongsTo(Hospital, { foreignKey: 'hospital_id' });
-
-// Patients ↔ HealthRecords
-Patient.hasMany(HealthRecord, { foreignKey: 'patient_id' });
-HealthRecord.belongsTo(Patient, { foreignKey: 'patient_id' });
-
-// Appointments ↔ Patients & Providers
-Patient.hasMany(Appointment, { foreignKey: 'patient_id' });
-Appointment.belongsTo(Patient, { foreignKey: 'patient_id' });
-
-Provider.hasMany(Appointment, { foreignKey: 'provider_id' });
-Appointment.belongsTo(Provider, { foreignKey: 'provider_id' });
-
-// Prescriptions ↔ HealthRecords & Providers
-HealthRecord.hasMany(Prescription, { foreignKey: 'record_id' });
-Prescription.belongsTo(HealthRecord, { foreignKey: 'record_id' });
-
-Provider.hasMany(Prescription, { foreignKey: 'provider_id' });
-Prescription.belongsTo(Provider, { foreignKey: 'provider_id' });
-
-// Audit Log ↔ Users
-User.hasMany(AuditLog, { foreignKey: 'user_id' });
-AuditLog.belongsTo(User, { foreignKey: 'user_id' });
 
 // Export models and sequelize
 module.exports = {

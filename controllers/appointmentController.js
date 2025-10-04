@@ -1,6 +1,30 @@
 const { Appointment, Provider, User } = require('../db');
 const { Op } = require('sequelize');
 
+// Helper: shape provider for frontend
+const shapeProvider = (p) => {
+  if (!p) return null;
+  const name = p.name || '';
+  const parts = name.split(' ').filter(Boolean);
+  const firstName = parts.shift() || '';
+  const lastName = parts.join(' ') || '';
+  return {
+    provider_id: p.provider_id,
+    firstName,
+    lastName,
+    specialization: p.specialization,
+    phone: p.phone,
+    is_active: p.is_active,
+    user_id: p.user_id,
+    profileUrl: p.profileUrl || null,
+    hospital_id: p.hospital_id,
+    is_deleted: p.is_deleted,
+    department: p.department,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+};
+
 // Book appointment - patient books for themselves. req.user set by auth middleware.
 exports.bookAppointment = async (req, res, next) => {
   try {
@@ -15,7 +39,16 @@ exports.bookAppointment = async (req, res, next) => {
       provider_id: provider_id || null,
     });
 
-    return res.status(201).json({ result_code: 1, message: 'Appointment booked', appointment: appt });
+    // Attach provider details if provider_id provided
+    let provider = null;
+    if (provider_id) {
+      const p = await Provider.findOne({ where: { provider_id } });
+      provider = shapeProvider(p);
+    }
+
+    const appointmentResponse = Object.assign({}, appt.toJSON(), { provider });
+
+    return res.status(201).json({ result_code: 1, message: 'Appointment booked', appointment: appointmentResponse });
   } catch (err) {
     return next(err);
   }
@@ -24,6 +57,7 @@ exports.bookAppointment = async (req, res, next) => {
 // Get available doctors within a time window. Expects { from, to }
 exports.getAvailableDoctors = async (req, res, next) => {
   try {
+    console.log('Finding available doctors with body:', req.body);
     const { from, to } = req.body;
     if (!from || !to) return res.status(400).json({ result_code: 0, message: 'from and to required' });
 
@@ -41,7 +75,36 @@ exports.getAvailableDoctors = async (req, res, next) => {
     const where = { is_deleted: false };
     if (busyProviderIds.length) where.provider_id = { [Op.notIn]: busyProviderIds };
 
-    const available = await Provider.findAll({ where });
+    const providers = await Provider.findAll({ where });
+
+    // Harmonize provider shape for frontend (AppointmentBooking expects firstName, lastName, availableTimes, etc.)
+    const available = providers.map((p) => {
+      const name = p.name || '';
+      const parts = name.split(' ').filter(Boolean);
+      const firstName = parts.shift() || '';
+      const lastName = parts.join(' ') || '';
+
+      // Minimal mocked available times (frontend uses these to render slots). In future we can compute based on provider schedule.
+      const availableTimes = ['09:00', '10:00', '11:00', '14:00', '15:00'];
+
+      return {
+        provider_id: p.provider_id,
+        firstName,
+        lastName,
+        specialization: p.specialization,
+        phone: p.phone,
+        is_active: p.is_active,
+        user_id: p.user_id,
+        profileUrl: p.profileUrl || null,
+        hospital_id: p.hospital_id,
+        is_deleted: p.is_deleted,
+        department: p.department,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        availableTimes,
+      };
+    });
+
     return res.status(200).json({ result_code: 1, available });
   } catch (err) {
     return next(err);
@@ -56,7 +119,25 @@ exports.getUpcoming = async (req, res, next) => {
 
     const now = new Date();
     const appts = await Appointment.findAll({ where: { patient_id: userId, date_time: { [Op.gt]: now } }, order: [['date_time', 'ASC']] });
-    return res.status(200).json({ result_code: 1, appointments: appts });
+
+    // Batch fetch provider details to avoid N+1 queries
+    const providerIds = Array.from(new Set(appts.map(a => a.provider_id).filter(Boolean)));
+    let providerMap = {};
+    if (providerIds.length) {
+      const providers = await Provider.findAll({ where: { provider_id: providerIds } });
+      providerMap = providers.reduce((acc, p) => {
+        acc[p.provider_id] = shapeProvider(p);
+        return acc;
+      }, {});
+    }
+
+    const enriched = appts.map((a) => {
+      const json = a.toJSON();
+      json.provider = json.provider_id ? providerMap[json.provider_id] || null : null;
+      return json;
+    });
+
+    return res.status(200).json({ result_code: 1, appointments: enriched });
   } catch (err) {
     return next(err);
   }
@@ -70,7 +151,25 @@ exports.getPast = async (req, res, next) => {
 
     const now = new Date();
     const appts = await Appointment.findAll({ where: { patient_id: userId, date_time: { [Op.lt]: now } }, order: [['date_time', 'DESC']] });
-    return res.status(200).json({ result_code: 1, appointments: appts });
+
+    // Batch fetch provider details to avoid N+1 queries
+    const providerIdsPast = Array.from(new Set(appts.map(a => a.provider_id).filter(Boolean)));
+    let providerMapPast = {};
+    if (providerIdsPast.length) {
+      const providers = await Provider.findAll({ where: { provider_id: providerIdsPast } });
+      providerMapPast = providers.reduce((acc, p) => {
+        acc[p.provider_id] = shapeProvider(p);
+        return acc;
+      }, {});
+    }
+
+    const enrichedPast = appts.map((a) => {
+      const json = a.toJSON();
+      json.provider = json.provider_id ? providerMapPast[json.provider_id] || null : null;
+      return json;
+    });
+
+    return res.status(200).json({ result_code: 1, appointments: enrichedPast });
   } catch (err) {
     return next(err);
   }

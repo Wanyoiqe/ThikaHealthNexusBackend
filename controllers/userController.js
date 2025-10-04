@@ -78,6 +78,7 @@ exports.registerUser = async (req, res, next) => {
       result_code: 1,
       message: existingUser ? 'User reactivated and registered successfully' : 'User registered successfully',
       user: userWithToken,
+      token,
     });
   } catch (err) {
     console.error('Error registering user:', err);
@@ -116,6 +117,7 @@ exports.loginUser = async (req, res, next) => {
         result_code: 1,
         message: "Login successful",
         user: userWithToken,
+        token,
       });
   } catch (err) {
     console.error("Error logging in user:", err);
