@@ -11,7 +11,6 @@ const AppointmentModel = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    // foreign keys stored as UUIDs; associations created elsewhere
     patient_id: {
       type: DataTypes.UUID,
       allowNull: false,

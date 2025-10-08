@@ -7,5 +7,6 @@ router.post('/api/appointments/book', authenticateToken, appointmentController.b
 router.post('/api/appointments/available', appointmentController.getAvailableDoctors);
 router.get('/api/appointments/upcoming', authenticateToken, appointmentController.getUpcoming);
 router.get('/api/appointments/past', authenticateToken, appointmentController.getPast);
+router.get('/api/appointments/all', authenticateToken, appointmentController.getAllAppointments);
 
 module.exports = router;
