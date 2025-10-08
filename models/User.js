@@ -21,13 +21,27 @@ module.exports = function(sequelize) {
       unique: true,
     },
     role: {
-      type: DataTypes.ENUM('admin', 'patient', 'provider', 'receptionist', 'doctor'),
+      type: DataTypes.ENUM('admin', 'patient', 'receptionist', 'doctor'),
       allowNull: false,
       defaultValue: 'patient',
     },
     profileUrl: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    phone_number: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    age: {
+      type: DataTypes.INTEGER,
+    },
+    gender: {
+      type: DataTypes.ENUM('male', 'female', 'other'),
     },
     isActive: {
       type: DataTypes.BOOLEAN,
@@ -38,14 +52,6 @@ module.exports = function(sequelize) {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    phone_number: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
     },
   });
 };

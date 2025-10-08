@@ -1,34 +1,6 @@
 {
   "users": [
     {
-      "user_id": "a1f3e1c2-3d4b-4c58-bb9e-1a2f3e456789",
-      "first_name": "Alice",
-      "last_name": "Wanjiku",
-      "email": "alice.wanjiku@example.com",
-      "password": "password",
-      "phone_number": "+254712345678",
-      "is_deleted": false
-    },
-    {
-      "user_id": "b2e4f2d3-4a5c-5d69-cc0f-2b3f4f567890",
-      "first_name": "Brian",
-      "last_name": "Odhiambo",
-      "email": "brian.odhiambo@example.com",
-      "password": "password",
-      "phone_number": "+254701234567",
-      "is_deleted": false
-    },
-    {
-      "user_id": "c3f5g3e4-5b6d-6e70-dd1g-3c4g5g678901",
-      "first_name": "Cynthia",
-      "last_name": "Mutheu",
-      "email": "cynthia.mutheu@example.com",
-      "password": "password",
-      "phone_number": "+254799876543",
-      "is_deleted": false
-    }
-    ,
-    {
       "user_id": "doc1-1111-2222-3333-444444444444",
       "first_name": "Daniel",
       "last_name": "Kamau",
@@ -47,16 +19,52 @@
       "phone_number": "+254700333444",
       "role": "doctor",
       "is_deleted": false
+    },
+    {
+      "user_id": "doc2-5555-6666-7777-999999999999",
+      "first_name": "Receptionist",
+      "last_name": "Hospital",
+      "email": "receptionist@hospital.example",
+      "password": "password",
+      "phone_number": "+254700222555",
+      "role": "receptionist",
+      "is_deleted": false
     }
   ],
-  "doctors": [
+  "hospitals": [
+    {
+      "hospital_id": "hosp-1000-2000-3000",
+      "name": "City Health Hospital",
+      "location": "123 Main St, Nairobi, Kenya",
+      "phone": "+254700123456"
+    }
+  ],
+  "specializations": [
+    {
+      "specialization_id": "spec-0001-0001-0001-0001",
+      "name": "General Medicine",
+      "description": "General health issues and primary care.",
+      "hospital_id": "hosp-1000-2000-3000"
+    },
+    {
+      "specialization_id": "spec-0002-0002-0002-0002",
+      "name": "Pediatrics",
+      "description": "Medical care for infants, children, and adolescents.",
+      "hospital_id": "hosp-1000-2000-3000"
+    },
+    {
+      "specialization_id": "spec-0003-0003-0003-0003",
+      "name": "Receptionist",
+      "description": "Handles patient check-ins and administrative tasks.",
+      "hospital_id": "hosp-1000-2000-3000"
+    }
+  ],
+  "providers": [
     {
       "provider_id": "prov-doc1-0001-0001-0001",
       "user_id": "doc1-1111-2222-3333-444444444444",
       "name": "Dr Daniel Kamau",
-      "specialization": "General Medicine",
-      "phone": "+254700111222",
-      "department": "Outpatient",
+      "specialization_id": "spec-0001-0001-0001-0001",
       "hospital_id": "hosp-1000-2000-3000",
       "is_active": true
     },
@@ -64,9 +72,15 @@
       "provider_id": "prov-doc2-0002-0002-0002",
       "user_id": "doc2-5555-6666-7777-888888888888",
       "name": "Dr Emily Achieng",
-      "specialization": "Pediatrics",
-      "phone": "+254700333444",
-      "department": "Pediatrics",
+      "specialization_id": "spec-0002-0002-0002-0002",
+      "hospital_id": "hosp-1000-2000-3000",
+      "is_active": true
+    },
+    {
+      "provider_id": "prov-recep-0003-0003-0003",
+      "user_id": "doc2-5555-6666-7777-999999999999",
+      "name": "Receptionist Hospital",
+      "specialization_id": "spec-0003-0003-0003-0003",
       "hospital_id": "hosp-1000-2000-3000",
       "is_active": true
     }

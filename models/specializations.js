@@ -2,23 +2,15 @@
 const { DataTypes } = require('sequelize');
 
 // Pure factory - associations are defined centrally in db.js
-const ProviderModel = (sequelize) => {
-  return sequelize.define('provider', {
-    provider_id: {
+const SpecializationModel = (sequelize) => {
+  return sequelize.define('specializations', {
+    specialization_id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    user_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
     name: {
       type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    specialization_id: {
-      type: DataTypes.UUID,
       allowNull: false,
     },
     hospital_id: {
@@ -35,4 +27,4 @@ const ProviderModel = (sequelize) => {
     },
   });
 };
-module.exports = { ProviderModel };
+module.exports = { SpecializationModel };

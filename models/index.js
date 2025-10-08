@@ -11,6 +11,7 @@ const { AppointmentModel } = require('./appointment');
 const { AuditLogModel } = require('./auditLog');
 const { HealthRecordModel } = require('./healthRecords');
 const { PrescriptionModel } = require('./prescription');
+const { SpecializationModel } = require('./specializations');
 
 const sequelize = new Sequelize(
   configs.database.database,
@@ -32,6 +33,7 @@ const Appointment = AppointmentModel(sequelize);
 const AuditLog = AuditLogModel(sequelize);
 const HealthRecord = HealthRecordModel(sequelize);
 const Prescription = PrescriptionModel(sequelize);
+const Specialization = SpecializationModel(sequelize);
 
 module.exports = {
   sequelize,
@@ -44,4 +46,5 @@ module.exports = {
   AuditLog,
   HealthRecord,
   Prescription,
+  Specialization,
 };

@@ -4,9 +4,9 @@ const jwt = require("jsonwebtoken");
 const { sendOnboardingEmail } = require("../utils/onboardingEmail");
 
 // User Registration (Sign up)
-exports.registerUser = async (req, res, next) => {
+exports.registerPatient = async (req, res, next) => {
   try {
-    const { first_name, last_name, email, password, phone_number, gender, role } = req.body;
+    const { firstName, lastName, email, password, phone, role } = req.body;
 
     // default role to 'patient' if not provided
     const userRole = role || 'patient';
@@ -14,7 +14,7 @@ exports.registerUser = async (req, res, next) => {
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
 
-    if (existingUser && !existingUser.is_deleted) {
+    if (existingUser) {
       return res.status(409).json({
         result_code: 0,
         message: 'User with this email already exists.',
@@ -22,44 +22,28 @@ exports.registerUser = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    let existingPatient = null;
+    const newUser = await User.create({
+      first_name:firstName.trim(),
+      last_name: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPassword.trim(),
+      phone_number: phone.trim(),
+      role: userRole.trim(), 
+    });
 
-    let newUser;
-
-    if (existingUser && existingUser.is_deleted) {
-      // Reactivate soft-deleted user
-      await existingUser.update({
-        first_name,
-        last_name,
-        phone_number,
-        password: hashedPassword,
-        is_deleted: false,
-        role: userRole,
-      });
-      newUser = existingUser;
-    } else {
-      // Create new user
-      newUser = await User.create({
-        first_name,
-        last_name,
-        email,
-        password: hashedPassword,
-        phone_number,
-        role: userRole,
-      });
-    }
+    console.log('New user created:', newUser);
 
     // If onboarding a patient, create a Patient record
     if (userRole === 'patient') {
       // combine names for patient.name
-      const name = `${first_name} ${last_name}`.trim();
+      const name = `${newUser.first_name} ${newUser.last_name}`.trim();
       // avoid duplicate patient entries
-      const existingPatient = await Patient.findOne({ where: { user_id: newUser.user_id } });
+      existingPatient = await Patient.findOne({ where: { user_id: newUser.user_id } });
       if (!existingPatient) {
         await Patient.create({
           user_id: newUser.user_id,
           name,
-          gender: gender || null,
-          phone: phone_number || null,
         });
       }
     }
@@ -77,6 +61,8 @@ exports.registerUser = async (req, res, next) => {
       result_code: 1,
       message: existingUser ? 'User reactivated and registered successfully' : 'User registered successfully',
       user: userWithToken,
+      patient: existingPatient,
+      token,
     });
   } catch (err) {
     console.error('Error registering user:', err);

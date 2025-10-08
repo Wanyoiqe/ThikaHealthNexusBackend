@@ -3,91 +3,102 @@ const path = require('path');
 const configs = require('../config.json');
 const bcrypt = require('bcryptjs');
 // Import models from centralized models index
-const { User, Provider } = require('../models');
+const { User, Provider, Specialization, Hospital } = require('../models'); // adjust path if needed
 
 module.exports.seedData = async (req, res, next) => {
-    try {
-        // Load JSON data
-        const jsonFilePath = path.join(__dirname, '..', 'data/data.json'); // Path to your JSON file
-        const data = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+  try {
+    const jsonFilePath = path.join(__dirname, '..', 'data', 'data.json');
+    const data = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
 
-        console.log('Starting data seeding...');
+    console.log('🚀 Starting data seeding...');
 
-        // Clear existing data in a specific order to avoid foreign key constraints issues
-        // Note: For a production environment, consider a more robust migration/seeding strategy.
-        // For testing/development, dropping tables before seeding might be necessary if IDs conflict.
-        // However, if you're relying on `db.fix` to `alter: true`, existing data might persist.
-        // For a clean seed, you might want to run db.drop first, then db.fix, then seed.
-
-        // Seed Users
-        if (data.users && data.users.length > 0) {
-            for (const u of data.users) {
-                // If password looks hashed (starts with $2), trust it; else hash it
-                let password = u.password || 'password';
-                if (!String(password).startsWith('$2')) {
-                    password = await bcrypt.hash(String(password), 10);
-                }
-
-                // Upsert user by email
-                const [usr, created] = await User.findOrCreate({
-                    where: { email: u.email },
-                    defaults: {
-                        user_id: u.user_id,
-                        first_name: u.first_name || '',
-                        last_name: u.last_name || '',
-                        email: u.email,
-                        password,
-                        phone_number: u.phone_number || null,
-                        is_deleted: !!u.is_deleted,
-                        role: u.role || 'patient',
-                    },
-                });
-                if (!created) {
-                    // optionally update some fields if needed
-                }
-            }
-            console.log('Users seeded successfully.');
-        }
-
-        // Seed doctors/providers: allow `data.doctors` or infer from users with role 'doctor'
-        const doctors = data.doctors || [];
-        // Infer doctors from users
-        const doctorUsers = await User.findAll({ where: { role: 'doctor' } });
-        for (const du of doctorUsers) {
-            doctors.push({
-                provider_id: du.user_id,
-                user_id: du.user_id,
-                name: `${du.first_name} ${du.last_name}`.trim(),
-                specialization: du.specialization || 'General',
-                phone: du.phone_number || null,
-            });
-        }
-
-        if (doctors.length > 0) {
-            for (const d of doctors) {
-                await Provider.findOrCreate({
-                    where: { user_id: d.user_id },
-                    defaults: {
-                        provider_id: d.provider_id || undefined,
-                        user_id: d.user_id,
-                        name: d.name || 'Doctor',
-                        specialization: d.specialization || 'General',
-                        phone: d.phone || null,
-                        is_active: d.is_active !== undefined ? !!d.is_active : true,
-                        department: d.department || null,
-                        hospital_id: d.hospital_id || null,
-                    },
-                });
-            }
-            console.log('Providers (doctors) seeded successfully.');
-        }
-
-        console.log('All data has been imported successfully.');
-
-        // Write the word to the response
-        return res.status(200).send(req.get("host") + " Data has been imported successfully.");
-    } catch (error) {
-        console.error('Unable to import data:', error);
-        return next(error);
+    /** =====================
+     * 1️⃣ SEED HOSPITALS
+     ====================== */
+    if (data.hospitals && data.hospitals.length > 0) {
+      for (const h of data.hospitals) {
+        await Hospital.findOrCreate({
+          where: { hospital_id: h.hospital_id },
+          defaults: {
+            hospital_id: h.hospital_id,
+            name: h.name,
+            location: h.location,
+            phone: h.phone,
+          },
+        });
+      }
+      console.log('🏥 Hospitals seeded successfully.');
     }
+
+    /** =====================
+     * 2️⃣ SEED USERS
+     ====================== */
+    if (data.users && data.users.length > 0) {
+      for (const u of data.users) {
+        let password = u.password || 'password';
+        if (!String(password).startsWith('$2')) {
+          password = await bcrypt.hash(String(password), 10);
+        }
+
+        await User.findOrCreate({
+          where: { email: u.email },
+          defaults: {
+            user_id: u.user_id,
+            first_name: u.first_name,
+            last_name: u.last_name,
+            email: u.email,
+            password,
+            phone_number: u.phone_number,
+            role: u.role || 'patient',
+            is_deleted: !!u.is_deleted,
+          },
+        });
+      }
+      console.log('👤 Users seeded successfully.');
+    }
+
+    /** =====================
+     * 3️⃣ SEED SPECIALIZATIONS
+     ====================== */
+    if (data.specializations && data.specializations.length > 0) {
+      for (const s of data.specializations) {
+        await Specialization.findOrCreate({
+          where: { specialization_id: s.specialization_id },
+          defaults: {
+            specialization_id: s.specialization_id,
+            name: s.name,
+            description: s.description,
+            hospital_id: s.hospital_id,
+          },
+        });
+      }
+      console.log('🩺 Specializations seeded successfully.');
+    }
+
+    /** =====================
+     * 4️⃣ SEED PROVIDERS
+     ====================== */
+    if (data.providers && data.providers.length > 0) {
+      for (const p of data.providers) {
+        await Provider.findOrCreate({
+          where: { provider_id: p.provider_id },
+          defaults: {
+            provider_id: p.provider_id,
+            user_id: p.user_id,
+            name: p.name,
+            specialization_id: p.specialization_id,
+            hospital_id: p.hospital_id,
+            is_active: !!p.is_active,
+          },
+        });
+      }
+      console.log('👨‍⚕️ Providers seeded successfully.');
+    }
+
+    console.log('✅ All data has been imported successfully.');
+    return res.status(200).send('Data imported successfully.');
+  } catch (error) {
+    console.error('❌ Unable to import data:', error);
+    return next(error);
+  }
 };

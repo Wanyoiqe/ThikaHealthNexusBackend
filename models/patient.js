@@ -1,6 +1,7 @@
 // Patients Model
 const { DataTypes } = require('sequelize');
 
+
 const PatientModel = (sequelize) => {
   return sequelize.define('patient', {
     patient_id: {
@@ -16,22 +17,18 @@ const PatientModel = (sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    age: {
-      type: DataTypes.INTEGER,
-    },
-    gender: {
-      type: DataTypes.ENUM('male', 'female', 'other'),
-    },
     diagnosis: {
       type: DataTypes.TEXT,
     },
-    phone: {
-      type: DataTypes.STRING(20),
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
-    profileUrl: {
-      type: DataTypes.STRING,
-      allowNull: true,
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   });
 };
+
 module.exports = { PatientModel };

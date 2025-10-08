@@ -11,6 +11,7 @@ const { AppointmentModel } = require('./models/appointment');
 const { AuditLogModel } = require('./models/auditLog');
 const { HealthRecordModel } = require('./models/healthRecords');
 const { PrescriptionModel } = require('./models/prescription');
+const { SpecializationModel } = require('./models/specializations');
 
 const sequelize = new Sequelize(
   configs.database.database,
@@ -31,6 +32,7 @@ const Appointment = AppointmentModel(sequelize);
 const AuditLog = AuditLogModel(sequelize);
 const HealthRecord = HealthRecordModel(sequelize);
 const Prescription = PrescriptionModel(sequelize);
+const Specialization = SpecializationModel(sequelize);
 
 // Define associations centrally
 // Users ↔ Patients / Providers
@@ -81,4 +83,5 @@ module.exports = {
   AuditLog,
   HealthRecord,
   Prescription,
+  Specialization,
 };
