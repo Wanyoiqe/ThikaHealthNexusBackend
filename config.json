@@ -2,10 +2,10 @@
   "database": {
     "host": "127.0.0.1",
     "port": 3306,
-    "user": "your_username",
-    "password": "your_user_password",
-    "database": "your_database_name",
-    "migrate": "FALSE"
+    "user": "root",
+    "password": "",
+    "database": "thikahealthnexus",
+    "migrate": "true"
   },
   "port": 5000,
   "uploadsMask": "u0veDcqIsErQVKXuXeM3",

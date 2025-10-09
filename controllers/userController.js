@@ -62,6 +62,7 @@ exports.registerPatient = async (req, res, next) => {
       result_code: 1,
       message: existingUser ? 'User reactivated and registered successfully' : 'User registered successfully',
       user: userWithToken,
+      patient: existingPatient,
       token,
     });
   } catch (err) {
@@ -92,7 +93,26 @@ exports.loginUser = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({ result_code: 0, message: "Invalid credentials." });
     }
+
+    if (foundUser.role === 'patient') {
+      const patient = await Patient.findOne({ where: { user_id: foundUser.user_id } });
+      if (!patient) {
+        return res.status(500).json({ result_code: 0, message: "Patient record not found." });
+      }
+      foundUser.dataValues.patient = patient; // attach patient record to user
+    }
+
+    if (foundUser.role === 'doctor') {
+      const provider = await Provider.findOne({ where: { user_id: foundUser.user_id } });
+      if (!provider) {
+        return res.status(500).json({ result_code: 0, message: "Provider record not found." });
+      }
+      foundUser.dataValues.provider = provider; // attach provider record to user
+    }
+
+
     const token = generateToken(foundUser);
+    
     // Include token in the user object
     const userWithToken = {
       ...foundUser.toJSON(),

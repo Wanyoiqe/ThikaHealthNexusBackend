@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+//const { User } = require('../models');
 const configs = require('../config.json');
 const { User } = require('../db');
 
@@ -16,7 +16,7 @@ exports.authenticateToken = (req, res, next) => {
         if (err) {
             return res.status(403).json({ result_code: 0, message: 'Invalid or expired token.' });
         }
-        const foundUser = await user.findOne({ where: { user_id: userPayload.user_id, is_deleted: false } });
+        const foundUser = await User.findOne({ where: { user_id: userPayload.user_id, is_deleted: false } });
         if (!foundUser) {
             return res.status(403).json({ result_code: 0, message: 'User not found or deleted.' });
         }

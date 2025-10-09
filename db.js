@@ -11,6 +11,7 @@ const dbEnv = {
   database: process.env.DB_NAME || process.env.MYSQL_DATABASE || configs.database.database,
 };
 
+
 // Model factories
 const UserModel = require('./models/User');
 const { PatientModel } = require('./models/patient');
