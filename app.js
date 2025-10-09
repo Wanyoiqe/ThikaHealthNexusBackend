@@ -15,7 +15,31 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:8080',       // your React frontend (dev)
+  'http://127.0.0.1:8080',
+  'https://your-production-domain.com', // add your deployed frontend here
+  'https://thikahealth.vercel.app',     // example
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (e.g. mobile apps, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `CORS policy does not allow access from origin: ${origin}`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true, // allow cookies, auth headers
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
