@@ -59,9 +59,14 @@ exports.getAvailableDoctors = async (req, res, next) => {
   try {
     console.log('Finding available doctors with body:', req.body);
     const { from, to } = req.body;
-    if (!from || !to) return res.status(400).json({ result_code: 0, message: 'from and to required' });
+    if (!from || !to) {
+      return res.status(400).json({
+        result_code: 0,
+        message: 'from and to required',
+      });
+    }
 
-    // Find providers who have NO appointments in that time window
+    // Find providers who already have appointments in that time window
     const busyProviderIds = await Appointment.findAll({
       where: {
         date_time: {
@@ -70,21 +75,48 @@ exports.getAvailableDoctors = async (req, res, next) => {
       },
       attributes: ['provider_id'],
       group: ['provider_id'],
-    }).then(rows => rows.map(r => r.provider_id).filter(Boolean));
+    }).then((rows) => rows.map((r) => r.provider_id).filter(Boolean));
 
     const where = { is_deleted: false };
-    if (busyProviderIds.length) where.provider_id = { [Op.notIn]: busyProviderIds };
+    if (busyProviderIds.length) {
+      where.provider_id = { [Op.notIn]: busyProviderIds };
+    }
 
+    // Fetch all providers that are not busy
     const providers = await Provider.findAll({ where });
+    if (!providers.length) {
+      return res.status(200).json({
+        result_code: 1,
+        available: [],
+      });
+    }
 
-    // Harmonize provider shape for frontend (AppointmentBooking expects firstName, lastName, availableTimes, etc.)
-    const available = providers.map((p) => {
+    // Get all related users for these providers
+    const userIds = providers.map((p) => p.user_id);
+    const users = await User.findAll({
+      where: {
+        user_id: userIds,
+        role: 'doctor', // Only doctors
+      },
+    });
+
+    const doctorUserIds = users.map((u) => u.user_id);
+
+    // Filter providers who belong to users with role 'doctor'
+    const doctorProviders = providers.filter((p) =>
+      doctorUserIds.includes(p.user_id)
+    );
+
+    console.log('Available doctors found:', doctorProviders.length);
+
+    // Harmonize provider shape for frontend
+    const available = doctorProviders.map((p) => {
       const name = p.name || '';
       const parts = name.split(' ').filter(Boolean);
       const firstName = parts.shift() || '';
       const lastName = parts.join(' ') || '';
 
-      // Minimal mocked available times (frontend uses these to render slots). In future we can compute based on provider schedule.
+      // Mocked available times (for frontend)
       const availableTimes = ['09:00', '10:00', '11:00', '14:00', '15:00'];
 
       return {
@@ -107,6 +139,7 @@ exports.getAvailableDoctors = async (req, res, next) => {
 
     return res.status(200).json({ result_code: 1, available });
   } catch (err) {
+    console.error('Error in getAvailableDoctors:', err);
     return next(err);
   }
 };

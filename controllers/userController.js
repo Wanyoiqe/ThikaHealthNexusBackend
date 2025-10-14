@@ -1,4 +1,4 @@
-const { User, Patient } = require("../models");
+const { User, Patient, Provider } = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendOnboardingEmail } = require("../utils/onboardingEmail");
@@ -58,7 +58,18 @@ exports.registerPatient = async (req, res, next) => {
       token,
     };
 
-    res.status(existingUser ? 200 : 201).json({
+    
+    try {
+      // call but don't await so login remains fast
+      sendOnboardingEmail(newUser).then((ok) => {
+        if (!ok) console.warn('Welcome email failed to send to', newUser.email);
+        if (ok) console.log('Welcome email sent to', newUser.email);
+      }).catch((e) => console.error('Error while sending welcome email:', e));
+    } catch (e) {
+      console.error('Unexpected error initiating welcome email:', e);
+    }
+
+    return res.status(existingUser ? 200 : 201).json({
       result_code: 1,
       message: existingUser ? 'User reactivated and registered successfully' : 'User registered successfully',
       user: userWithToken,
@@ -120,11 +131,11 @@ exports.loginUser = async (req, res, next) => {
     };
 
     return res.status(200).json({
-        result_code: 1,
-        message: "Login successful",
-        user: userWithToken,
-        token,
-      });
+      result_code: 1,
+      message: "Login successful",
+      user: userWithToken,
+      token,
+    });
   } catch (err) {
     console.error("Error logging in user:", err);
     return next(err);
@@ -144,5 +155,69 @@ exports.testEmail = async (req, res, next) => {
     console.error("Error sending test email:", err);
     return next(err);
 
+  }
+};
+
+// Get available doctors within a time window. Expects { from, to }
+// Get all doctors with complete details
+exports.getAllDoctors = async (req, res, next) => {
+  try {
+    console.log('Fetching all doctors...');
+
+    const providers = await Provider.findAll({
+      where: { is_deleted: false, is_active: true },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          where: { role: 'doctor', is_deleted: false, isActive: true },
+          attributes: [
+            'user_id',
+            'first_name',
+            'last_name',
+            'email',
+            'gender',
+            'phone_number',
+            'profileUrl',
+          ],
+        },
+      ],
+    });
+
+    if (!providers.length) {
+      return res.status(200).json({
+        result_code: 1,
+        doctors: [],
+      });
+    }
+
+    // Harmonize provider + user details for frontend
+    const doctors = providers.map((p) => {
+      const u = p.user || {};
+      return {
+        provider_id: p.provider_id,
+        user_id: u.user_id,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        full_name: `${u.first_name} ${u.last_name}`,
+        email: u.email,
+        gender: u.gender,
+        phone_number: u.phone_number,
+        profileUrl: u.profileUrl,
+        specialization_id: p.specialization_id,
+        hospital_id: p.hospital_id,
+        is_active: p.is_active,
+        is_deleted: p.is_deleted,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      };
+    });
+
+    console.log('Doctors fetched:', doctors.length);
+
+    return res.status(200).json({ result_code: 1, doctors });
+  } catch (err) {
+    console.error('Error in getAllDoctors:', err);
+    return next(err);
   }
 };

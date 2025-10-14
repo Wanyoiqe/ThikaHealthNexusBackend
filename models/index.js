@@ -35,6 +35,16 @@ const HealthRecord = HealthRecordModel(sequelize);
 const Prescription = PrescriptionModel(sequelize);
 const Specialization = SpecializationModel(sequelize);
 
+Provider.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+});
+
+User.hasOne(Provider, {
+  foreignKey: 'user_id',
+  as: 'provider',
+});
+
 module.exports = {
   sequelize,
   Sequelize,
