@@ -19,7 +19,13 @@ const ProviderModel = (sequelize) => {
     },
     specialization_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
+      references: {
+        model: 'specializations', // table name to reference
+        key: 'specialization_id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
     },
     hospital_id: {
       type: DataTypes.UUID,
