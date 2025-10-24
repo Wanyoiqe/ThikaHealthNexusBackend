@@ -1,0 +1,145 @@
+{
+	"info": {
+		"_postman_id": "3c6897ba-21aa-489c-a75a-264641377f12",
+		"name": "ThikaNexus",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43967841",
+		"_collection_link": "https://mercygakii.postman.co/workspace/Mercy-Gakii's-Workspace~dce6af75-9bfd-4960-8a1a-72f21bfc0544/collection/43967841-3c6897ba-21aa-489c-a75a-264641377f12?action=share&source=collection_link&creator=43967841"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"first_name\": \"John\",\r\n    \"last_name\": \"Doe\",\r\n    \"email\": \"john.doe@example.com\",\r\n    \"password\": \"supersecret\",\r\n    \"phone_number\": \"+254700000000\"\r\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/users/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"users",
+						"register"
+					]
+				},
+				"description": "Generated from cURL: curl -i -X POST http://localhost:5000/api/users/register \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n    \"first_name\": \"John\",\r\n    \"last_name\": \"Doe\",\r\n    \"email\": \"john.doe@example.com\",\r\n    \"password\": \"supersecret\",\r\n    \"phone_number\": \"+254700000000\"\r\n  }'"
+			},
+			"response": []
+		},
+		{
+			"name": "Add doctor",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Dr. Amina Yusuf\",\r\n  \"email\": \"amina.yusuf@example.com\",\r\n  \"phone_number\": \"0712345678\",\r\n  \"password\": \"strongPass123\",\r\n  \"gender\": \"female\",\r\n  \"specialization_id\": 2\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/providers/registerDoctor",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"providers",
+						"registerDoctor"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ConcentRequest",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZG9jMi01NTU1LTY2NjYtNzc3Ny04ODg4ODg4ODg4ODgiLCJpYXQiOjE3NjEyMjQwNjIsImV4cCI6MTc2MTMxMDQ2Mn0.YJHf7EZRkv1VGUkoDsHnXXpWYhLNiTkDtVN6Dp5Md6g",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"patient_id\": \"ef6c49ce-c6ae-4369-8f60-945352f76232\",\r\n  \"provider_id\": \"prov-doc2-0002-0002-0002\",\r\n  \"purpose\": \"Doctor requesting access to health records for diagnosis\",\r\n  \"request_date\": \"23/10/2025\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/consent-requests",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"consent-requests"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"mercywanyoike741@gmail.com\",\r\n  \"password\": \"mercywanyoike741@gmail.com\"\r\n}\r\n\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/users/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
