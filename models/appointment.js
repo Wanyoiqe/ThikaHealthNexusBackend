@@ -23,6 +23,10 @@ const AppointmentModel = (sequelize) => {
       type: DataTypes.ENUM('scheduled', 'completed', 'cancelled'),
       defaultValue: 'scheduled',
     },
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   });
 };
 module.exports = { AppointmentModel };

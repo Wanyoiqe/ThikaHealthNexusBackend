@@ -22,6 +22,7 @@ const { AuditLogModel } = require('./models/auditLog');
 const { HealthRecordModel } = require('./models/healthRecords');
 const { PrescriptionModel } = require('./models/prescription');
 const { SpecializationModel } = require('./models/specializations');
+const { ConsentModel } = require('./models/consent');
 
 const sequelize = new Sequelize(
   dbEnv.database,
@@ -48,6 +49,7 @@ const AuditLog = AuditLogModel(sequelize);
 const HealthRecord = HealthRecordModel(sequelize);
 const Prescription = PrescriptionModel(sequelize);
 const Specialization = SpecializationModel(sequelize);
+const Consent = ConsentModel(sequelize);
 
 // Define relationships
 Provider.belongsTo(Specialization, {
@@ -75,4 +77,5 @@ module.exports = {
   HealthRecord,
   Prescription,
   Specialization,
+  Consent,
 };

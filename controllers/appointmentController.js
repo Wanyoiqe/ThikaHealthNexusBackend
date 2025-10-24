@@ -1,4 +1,4 @@
-const { Appointment, Provider, User } = require('../models');
+const { Appointment, Provider, User, Patient } = require('../models');
 const { Op } = require('sequelize');
 
 // Helper: shape provider for frontend
@@ -29,13 +29,15 @@ const shapeProvider = (p) => {
 exports.bookAppointment = async (req, res, next) => {
   try {
     const { date_time, provider_id } = req.body;
-    const userId = req.user && req.user.id;
+    const userId = req.user && req.user.user_id;
     if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
+
+    const patient = await Patient.findOne({ where: { user_id: userId } });
 
     // Create appointment
     const appt = await Appointment.create({
       date_time,
-      patient_id: req.user.id,
+      patient_id: patient.patient_id,
       provider_id: provider_id || null,
     });
 
@@ -147,11 +149,21 @@ exports.getAvailableDoctors = async (req, res, next) => {
 // Get upcoming appointments for the authenticated user (future)
 exports.getUpcoming = async (req, res, next) => {
   try {
-    const userId = req.user && req.user.id;
+    // const providerId = req.user.provider.provider_id;
+    const userId = req.user && req.user.user_id;
     if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
 
+    const patient = await Patient.findOne({ where: { user_id: userId } });
+
+    // Create appointment
+    // const appt = await Appointment.create({
+    //   date_time,
+    //   patient_id: patient.patient_id,
+    //   provider_id: provider_id || null,
+    // });
+
     const now = new Date();
-    const appts = await Appointment.findAll({ where: { patient_id: userId, date_time: { [Op.gt]: now } }, order: [['date_time', 'ASC']] });
+    const appts = await Appointment.findAll({ where: { patient_id: patient.patient_id, date_time: { [Op.gt]: now } }, order: [['date_time', 'ASC']] });
 
     // Batch fetch provider details to avoid N+1 queries
     const providerIds = Array.from(new Set(appts.map(a => a.provider_id).filter(Boolean)));
@@ -180,11 +192,13 @@ exports.getUpcoming = async (req, res, next) => {
 // Get All appointments for the authenticated user (future)
 exports.getAllAppointments = async (req, res, next) => {
   try {
-    const userId = req.user && req.user.id;
+    const userId = req.user && req.user.user_id;
     if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
 
+    const patient = await Patient.findOne({ where: { user_id: userId } });
+
     const now = new Date();
-    const appts = await Appointment.findAll({ where: { patient_id: userId }, order: [['date_time', 'ASC']] });
+    const appts = await Appointment.findAll({ where: { patient_id: patient.patient_id }, order: [['date_time', 'ASC']] });
 
     // Batch fetch provider details to avoid N+1 queries
     const providerIds = Array.from(new Set(appts.map(a => a.provider_id).filter(Boolean)));
@@ -212,11 +226,13 @@ exports.getAllAppointments = async (req, res, next) => {
 // Get past appointments for authenticated user
 exports.getPast = async (req, res, next) => {
   try {
-    const userId = req.user && req.user.id;
+    const userId = req.user && req.user.user_id;
     if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
 
+    const patient = await Patient.findOne({ where: { user_id: userId } });
+
     const now = new Date();
-    const appts = await Appointment.findAll({ where: { patient_id: userId, date_time: { [Op.lt]: now } }, order: [['date_time', 'DESC']] });
+    const appts = await Appointment.findAll({ where: { patient_id: patient.patient_id, date_time: { [Op.lt]: now } }, order: [['date_time', 'DESC']] });
 
     // Batch fetch provider details to avoid N+1 queries
     const providerIdsPast = Array.from(new Set(appts.map(a => a.provider_id).filter(Boolean)));

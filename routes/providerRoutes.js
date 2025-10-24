@@ -6,11 +6,8 @@ const { authenticateToken } = require('../middlewares/authMiddleware');
 
 // Add new doctor
 router.post('/api/providers/registerDoctor', authenticateToken, providerController.addDoctor)
-
-
-
-
 router.get('/api/providers/fetch_all_doctors', userController.getAllDoctors);
+router.get('/api/providers/fetch_doctors_patients', authenticateToken, providerController.getDoctorsPatients);
 
 
 module.exports = router;
