@@ -25,6 +25,10 @@ const HealthRecordModel = (sequelize) => {
       type: DataTypes.UUID,
       allowNull: false,
     },
+    appointment_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

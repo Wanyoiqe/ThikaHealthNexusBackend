@@ -8,6 +8,7 @@ const { authenticateToken } = require('../middlewares/authMiddleware');
 router.post('/api/providers/registerDoctor', authenticateToken, providerController.addDoctor)
 router.get('/api/providers/fetch_all_doctors', userController.getAllDoctors);
 router.get('/api/providers/fetch_doctors_patients', authenticateToken, providerController.getDoctorsPatients);
+router.get('/api/providers/dashboard_details', authenticateToken, providerController.getReceptionistDashboardDetails);  
 
 
 module.exports = router;

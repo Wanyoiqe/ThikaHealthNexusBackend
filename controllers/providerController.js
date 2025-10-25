@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { Op } = require("sequelize");
-const { User, Patient, Provider, Appointment } = require("../models");
+const { User, Patient, Provider, Appointment, Specialization } = require("../models");
 
 const specializations = [
   { id: '1', name: 'cardiology' },
@@ -29,11 +29,13 @@ exports.addDoctor = async (req, res) => {
     }
 
     // Match specialization name to its ID
-    const specializationObj = specializations.find(spec => spec.name === specialization);
-    if (!specializationObj) {
-      return res.status(400).json({ message: "Invalid specialization selected" });
-    }
-    const specialization_id = specializationObj.id;
+        // Try to find the specialization in the DB (specializations table uses UUID primary keys)
+        let specializationRecord = await Specialization.findOne({ where: { name: specialization } });
+        // If it doesn't exist, create it so the provider can reference a valid specialization_id
+        if (!specializationRecord) {
+          specializationRecord = await Specialization.create({ name: specialization });
+        }
+        const specialization_id = specializationRecord.specialization_id;
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
@@ -173,6 +175,43 @@ exports.getDoctorsPatients = async (req, res, next) => {
     }
     
     return res.status(200).json({ result_code: 1, patients });
+  } catch (err) {
+    console.error('Error in getAllDoctors:', err);
+    return next(err);
+  }
+};
+
+
+exports.getReceptionistDashboardDetails = async (req, res, next) => {
+  try {
+    const patientCount = await Patient.count({
+      where: { is_deleted: false },
+    });
+
+    const staffCount = await Provider.count({
+      where: { is_deleted: false, is_active: true },
+    });
+    const appointmentCount = await Appointment.count({
+      where: { status: { [Op.ne]: 'cancelled' } },
+    });
+
+    const appointmentCountToday = await Appointment.count({
+      where: {
+        status: { [Op.ne]: 'cancelled' },
+        date_time: {
+          [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
+          [Op.lt]: new Date(new Date().setHours(23, 59, 59, 999)),
+        },
+      },
+    });
+
+    const data = {
+      patientCount,
+      staffCount,
+      appointmentCount,
+      appointmentCountToday,
+    };
+    return res.status(200).json({ result_code: 1, data });
   } catch (err) {
     console.error('Error in getAllDoctors:', err);
     return next(err);
