@@ -137,13 +137,13 @@ exports.getDoctorsPatients = async (req, res, next) => {
     const patientIds = [...new Set(appointments.map(app => app.patient_id))];
     console.log('Unique patient IDs:', patientIds);
 
-    const PatientId = patientIds[0];
-    console.log('Sample Patient ID:', PatientId);
+    // const PatientId = patientIds[0];
+    // console.log('Sample Patient ID:', PatientId);
 
-    const patient = await Patient.findOne({
-      where: { patient_id: PatientId },
-    });
-    console.log('Sample Patient fetched:', patient);
+    // const patient = await Patient.findOne({
+    //   where: { patient_id: PatientId },
+    // });
+    // console.log('Sample Patient fetched:', patient);
 
     const allPatients = await Patient.findAll({
       where: {
@@ -164,8 +164,6 @@ exports.getDoctorsPatients = async (req, res, next) => {
           .sort((a, b) => new Date(b.date_time) - new Date(a.date_time))[0].date_time
       };
     });
-
-    console.log('Patients fetched:', patients.length);
 
     if (!patients.length) {
       return res.status(200).json({

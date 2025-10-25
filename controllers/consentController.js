@@ -22,9 +22,9 @@ exports.getConsentDoctorsRequests = async (req, res) => {
     const formattedRequests = requests.map(request => ({
       id: request.consent_id,
       doctorId: request.provider_id,
-      doctorName: `${request.provider.user.first_name} ${request.provider.user.last_name}`,
-      specialization: request.provider.specialization,
-      requestDate: request.request_date,
+      doctorName: provider.name,
+      request_date: request.request_date,
+      type: request.type,
       purpose: request.purpose,
       status: request.status
     }));
@@ -147,10 +147,6 @@ exports.revokeConsent = async (req, res) => {
 exports.createConsentRequest = async (req, res, next) => {
   try {
     console.log('Creating consent request ...');
-    console.log(req.user);
-
-    console.log(req.body);
-
     const providerId = req.user.provider.provider_id;
     const { patient_id, record_id, purpose, request_date, type } = req.body;
 
