@@ -1,39 +1,33 @@
 const { HealthRecord, Appointment, Provider, Patient } = require('../db');
-const { Op } = require('sequelize');
+const { Op, or } = require('sequelize');
 
-// Create a health record. Only a provider (doctor) may create a record and only around the appointment time.
+// Create a health record. Only a provider (doctor) may create a record.
 exports.createHealthRecord = async (req, res, next) => {
   try {
-    const { patient_id, appointment_id, diagnosis, treatment, notes } = req.body;
+    const { appointment_id, record_type, data } = req.body;
 
     // Derive provider from authenticated user
-    const userId = req.user && req.user.id;
+    const userId = req.user && req.user.user_id;
     if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
 
     const provider = await Provider.findOne({ where: { user_id: userId } });
     if (!provider) return res.status(403).json({ result_code: 0, message: 'Only providers can create health records' });
 
     // Ensure required fields
-    if (!patient_id || !appointment_id) return res.status(400).json({ result_code: 0, message: 'patient_id and appointment_id are required' });
-
-    // Check that the appointment exists and is for this provider and patient
-    const appt = await Appointment.findOne({ where: { app_id: appointment_id, provider_id: provider.provider_id, patient_id } });
-    if (!appt) return res.status(400).json({ result_code: 0, message: 'No matching appointment found for this provider and patient' });
-
-    // Enforce timing: allow record creation only if current time is within +/-30 minutes of the appointment time
-    const now = new Date();
-    const apptTime = new Date(appt.date_time);
-    const windowMs = 30 * 60 * 1000; // 30 minutes
-    if (Math.abs(now - apptTime) > windowMs) {
-      return res.status(400).json({ result_code: 0, message: 'Health records can only be created around the scheduled appointment time' });
+    if (!appointment_id || !record_type || !data) {
+      return res.status(400).json({ result_code: 0, message: 'appointment_id, record_type, and data are required' });
     }
+
+    // Check that the appointment exists and is for this provider
+    const appt = await Appointment.findOne({ where: { app_id: appointment_id, provider_id: provider.provider_id } });
+    if (!appt) return res.status(400).json({ result_code: 0, message: 'No matching appointment found for this provider' });
 
     // Create the health record
     const record = await HealthRecord.create({
-      diagnosis: diagnosis || null,
-      treatment: treatment || null,
-      notes: notes || null,
-      patient_id,
+      appointment_id,
+      record_type,
+      data,
+      patient_id: appt.patient_id,
       provider_id: provider.provider_id,
     });
 
@@ -134,23 +128,105 @@ exports.getAppointmentsForPatient = async (req, res, next) => {
 exports.getHealthRecordForPatientByAppointmentId = async (req, res, next) => {
   try {
     const userId = req.user && req.user.user_id;
-    const {appointment_id, patient_id} = req.params;
-    // const {} = req.params;
+    const { appointment_id, patient_id } = req.params;
+
     if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
 
     const provider = await Provider.findOne({ where: { user_id: userId } });
     if (!provider) return res.status(403).json({ result_code: 0, message: 'Only providers can access other patients records' });
 
-    // const appointments = await Appointment.findAll({ where: { patient_id, provider_id:provider.provider_id }, order: [['date_time', 'DESC']] });
     if (!appointment_id) return res.status(400).json({ result_code: 0, message: 'appointment_id required' });
+    if (!patient_id) return res.status(400).json({ result_code: 0, message: 'patient_id required' });
 
     console.log('Fetching health record for appointment_id:', appointment_id, 'and patient_id:', patient_id);
 
-    const healthRecord = await HealthRecord.findOne({ where: { appointment_id, provider_id:provider.provider_id, patient_id } });
+    // Find appointment first to validate it exists and belongs to this provider
+    const appointment = await Appointment.findOne({
+      where: { 
+        app_id: appointment_id, 
+        provider_id: provider.provider_id,
+        patient_id 
+      }
+    });
 
-    console.log('Appointments fetched:', healthRecord);
-    return res.status(200).json({ result_code: 1, healthRecord });
+    if (!appointment) {
+      return res.status(404).json({ 
+        result_code: 0, 
+        message: 'Appointment not found or not authorized to access' 
+      });
+    }
+
+    const healthRecord = await HealthRecord.findOne({ 
+      where: { 
+        appointment_id,
+        provider_id: provider.provider_id,
+        patient_id,
+        is_active: true
+      },
+      attributes: ['record_id', 'record_type', 'data', 'created_at', 'updated_at']
+    });
+
+    // Format response consistently whether record exists or not
+    const response = {
+      result_code: 1,
+      health_record: healthRecord ? {
+        record_id: healthRecord.record_id,
+        record_type: healthRecord.record_type,
+        data: healthRecord.data,
+        created_at: healthRecord.created_at,
+        updated_at: healthRecord.updated_at
+      } : null
+    };
+
+    console.log('Health record response:', response);
+    return res.status(200).json(response);
   } catch (err) {
+    console.error('Error fetching health record:', err);
+    return next(err);
+  }
+};
+
+
+exports.getHealthRecordsByDoctor = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.user_id;
+    console.log('Authenticated user :', req.user);
+    if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
+
+    const provider = await Provider.findOne({ where: { user_id: userId } });
+    if (!provider) return res.status(403).json({ result_code: 0, message: 'Only providers can access other patients records' });
+
+    const health_records = await HealthRecord.findAll({
+      where: { 
+        provider_id: provider.provider_id,
+        is_active: true
+      },
+      attributes: ['record_id', 'record_type', 'patient_id','appointment_id', 'created_at', 'updated_at'],
+      order: [['created_at', 'DESC']]
+    });
+
+    const patientIds = health_records.map(hr => hr.patient_id);
+    const patients = await Patient.findAll({
+      where: {
+        patient_id: { [Op.in]: patientIds }
+      },
+      attributes: ['patient_id', 'name']
+    });
+ 
+    // Format response consistently whether record exists or not
+    const response = {
+      result_code: 1,
+      health_records: health_records.map(hr => ({
+        record_id: hr.record_id,
+        record_type: hr.record_type,
+        patient_id: hr.patient_id,
+        patient_name: patients.find(p => p.patient_id === hr.patient_id)?.name || 'Unknown',
+        appointment_id: hr.appointment_id,
+      }))
+    };
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error('Error fetching health record:', err);
     return next(err);
   }
 };

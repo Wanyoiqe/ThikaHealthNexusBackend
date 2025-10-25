@@ -2,22 +2,20 @@ const { User, Provider, Patient, Consent } = require('../models');
 const { Op } = require('sequelize');
 
 // Get all consent requests for a patient
-exports.getConsentRequests = async (req, res) => {
+exports.getConsentDoctorsRequests = async (req, res) => {
   try {
-    const patientId = req.user.patient.patient_id; // Assuming we have user data from auth middleware
+    // const patientId = req.user.patient.patient_id; // Assuming we have user data from auth middleware
+    const userId = req.user && req.user.user_id;
+    if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
 
+    const provider = await Provider.findOne({ where: { user_id: userId } });
+    if (!provider) return res.status(403).json({ result_code: 0, message: 'Only providers can access consent requests' });
+    
     const requests = await Consent.findAll({
       where: {
-        patient_id: patientId,
+        provider_id: provider.provider_id,
         status: 'pending'
       },
-      include: [{
-        model: Provider,
-        include: [{
-          model: User,
-          attributes: ['first_name', 'last_name']
-        }]
-      }],
       order: [['request_date', 'DESC']]
     });
 
@@ -146,38 +144,58 @@ exports.revokeConsent = async (req, res) => {
 };
 
 // Create consent request (for doctors)
-exports.createConsentRequest = async (req, res) => {
+exports.createConsentRequest = async (req, res, next) => {
   try {
-    const providerId = req.user.provider.provider_id;
-    const { patientId, purpose } = req.body;
+    console.log('Creating consent request ...');
+    console.log(req.user);
 
-    // Check if there's already a pending request
+    console.log(req.body);
+
+    const providerId = req.user.provider.provider_id;
+    const { patient_id, record_id, purpose, request_date, type } = req.body;
+
+    // // Check if there's already a pending request
     const existingRequest = await Consent.findOne({
       where: {
         provider_id: providerId,
-        patient_id: patientId,
-        status: 'pending'
+        patient_id: patient_id,
+        health_record_id: record_id,
+        // type: type,
+        status: 'pending',
+        // purpose: purpose
       }
     });
 
+    const patient = await Patient.findOne({ where: { patient_id: patient_id } });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    // Update patient to indicate pending consent
+    await patient.update({ has_pending_consent: true });
+    console.log('Patient updated with pending consent');
+
     if (existingRequest) {
-      return res.status(400).json({ message: 'A pending request already exists' });
+      return res.status(200).json({ 
+        message: 'Consent request already pending for this record',
+        consentId: existingRequest.consent_id
+      });
     }
 
     const consent = await Consent.create({
       provider_id: providerId,
-      patient_id: patientId,
+      patient_id: patient_id,
+      health_record_id: record_id,
+      type: type,
       purpose,
       request_date: new Date(),
       status: 'pending'
     });
-
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Consent request created successfully',
       consentId: consent.consent_id
     });
   } catch (error) {
-    console.error('Error creating consent request:', error);
-    res.status(500).json({ message: 'Failed to create consent request' });
+      return next(error);   
   }
 };

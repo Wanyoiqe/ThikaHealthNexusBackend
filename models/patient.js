@@ -20,6 +20,10 @@ const PatientModel = (sequelize) => {
     diagnosis: {
       type: DataTypes.TEXT,
     },
+    has_pending_consent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

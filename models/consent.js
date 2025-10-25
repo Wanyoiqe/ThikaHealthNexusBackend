@@ -7,6 +7,10 @@ const ConsentModel = (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    health_record_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
     patient_id: {
       type: DataTypes.UUID,
       allowNull: false,
