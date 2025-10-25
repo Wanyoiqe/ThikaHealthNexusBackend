@@ -162,7 +162,6 @@ exports.testEmail = async (req, res, next) => {
 // Get all doctors with complete details
 exports.getAllDoctors = async (req, res, next) => {
   try {
-    console.log('Fetching all doctors...');
 
     const providers = await Provider.findAll({
       where: { is_deleted: false, is_active: true },
@@ -213,7 +212,6 @@ exports.getAllDoctors = async (req, res, next) => {
       };
     });
 
-    console.log('Doctors fetched:', doctors.length);
 
     return res.status(200).json({ result_code: 1, doctors });
   } catch (err) {

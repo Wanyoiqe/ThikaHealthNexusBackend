@@ -110,3 +110,47 @@ exports.getRecordById = async (req, res, next) => {
     return next(err);
   }
 };
+
+
+// Provider: get records for a specific patient by patient_id
+exports.getAppointmentsForPatient = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.user_id;
+    const {patient_id} = req.params;
+    if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
+
+    const provider = await Provider.findOne({ where: { user_id: userId } });
+    if (!provider) return res.status(403).json({ result_code: 0, message: 'Only providers can access other patients records' });
+
+    const appointments = await Appointment.findAll({ where: { patient_id, provider_id:provider.provider_id }, order: [['date_time', 'DESC']] });
+
+    console.log('Appointments fetched:', appointments);
+    return res.status(200).json({ result_code: 1, appointments });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+exports.getHealthRecordForPatientByAppointmentId = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.user_id;
+    const {appointment_id, patient_id} = req.params;
+    // const {} = req.params;
+    if (!userId) return res.status(401).json({ result_code: 0, message: 'Unauthorized' });
+
+    const provider = await Provider.findOne({ where: { user_id: userId } });
+    if (!provider) return res.status(403).json({ result_code: 0, message: 'Only providers can access other patients records' });
+
+    // const appointments = await Appointment.findAll({ where: { patient_id, provider_id:provider.provider_id }, order: [['date_time', 'DESC']] });
+    if (!appointment_id) return res.status(400).json({ result_code: 0, message: 'appointment_id required' });
+
+    console.log('Fetching health record for appointment_id:', appointment_id, 'and patient_id:', patient_id);
+
+    const healthRecord = await HealthRecord.findOne({ where: { appointment_id, provider_id:provider.provider_id, patient_id } });
+
+    console.log('Appointments fetched:', healthRecord);
+    return res.status(200).json({ result_code: 1, healthRecord });
+  } catch (err) {
+    return next(err);
+  }
+};

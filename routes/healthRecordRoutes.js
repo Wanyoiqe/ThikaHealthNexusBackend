@@ -15,4 +15,8 @@ router.get('/api/healthrecords/patient/:patient_id', authenticateToken, healthRe
 // Get single record
 router.get('/api/healthrecords/:record_id', authenticateToken, healthRecordController.getRecordById);
 
+// Get appointments for a specific patient
+router.get('/api/healthrecords/patient-appointments/:patient_id', authenticateToken, healthRecordController.getAppointmentsForPatient);
+router.get('/api/health-records/appointment/:appointment_id/:patient_id', authenticateToken, healthRecordController.getHealthRecordForPatientByAppointmentId);
+
 module.exports = router;
