@@ -1,6 +1,22 @@
 const { Appointment, Provider, User, Patient } = require('../models');
 const { Op } = require('sequelize');
 
+// Helper: shape patient for frontend
+const shapePatient = async (patient_id) => {
+  if (!patient_id) return null;
+  const patient = await Patient.findOne({ where: { patient_id } });
+  if (!patient) return null;
+  const user = await User.findOne({ where: { user_id: patient.user_id }, attributes: ['phone_number'] });
+  const nameParts = (patient.name || '').split(' ').filter(Boolean);
+  return {
+    patient_id: patient.patient_id,
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' ') || '',
+    full_name: patient.name,
+    phone: user?.phone_number || null,
+  };
+};
+
 // Helper: shape provider for frontend
 const shapeProvider = (p) => {
   if (!p) return null;
@@ -252,6 +268,104 @@ exports.getPast = async (req, res, next) => {
     });
 
     return res.status(200).json({ result_code: 1, appointments: enrichedPast });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// ─── Doctor-scoped appointment endpoints ────────────────────────────────────
+
+const getDoctorAppointments = async (req, whereExtra) => {
+  const provider = req.user?.provider;
+  if (!provider) throw Object.assign(new Error('Provider record not found'), { status: 403 });
+
+  const appts = await Appointment.findAll({
+    where: { provider_id: provider.provider_id, ...whereExtra },
+    order: [['date_time', 'ASC']],
+  });
+
+  // Batch fetch patient details to avoid N+1
+  const patientIds = [...new Set(appts.map(a => a.patient_id).filter(Boolean))];
+  const patientMap = {};
+  if (patientIds.length) {
+    const patients = await Patient.findAll({ where: { patient_id: patientIds } });
+    const userIds = patients.map(p => p.user_id);
+    const users = await User.findAll({ where: { user_id: userIds }, attributes: ['user_id', 'phone_number'] });
+    const userPhoneMap = users.reduce((acc, u) => { acc[u.user_id] = u.phone_number; return acc; }, {});
+
+    patients.forEach(p => {
+      const nameParts = (p.name || '').split(' ').filter(Boolean);
+      patientMap[p.patient_id] = {
+        patient_id: p.patient_id,
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        full_name: p.name,
+        phone: userPhoneMap[p.user_id] || null,
+      };
+    });
+  }
+
+  return appts.map(a => {
+    const json = a.toJSON();
+    json.patient = json.patient_id ? patientMap[json.patient_id] || null : null;
+    return json;
+  });
+};
+
+// GET /api/appointments/doctor/all
+exports.getDoctorAll = async (req, res, next) => {
+  try {
+    const appointments = await getDoctorAppointments(req, {});
+    return res.status(200).json({ result_code: 1, appointments });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ result_code: 0, message: err.message });
+    return next(err);
+  }
+};
+
+// GET /api/appointments/doctor/upcoming
+exports.getDoctorUpcoming = async (req, res, next) => {
+  try {
+    const appointments = await getDoctorAppointments(req, { date_time: { [Op.gt]: new Date() } });
+    return res.status(200).json({ result_code: 1, appointments });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ result_code: 0, message: err.message });
+    return next(err);
+  }
+};
+
+// GET /api/appointments/doctor/past
+exports.getDoctorPast = async (req, res, next) => {
+  try {
+    const appointments = await getDoctorAppointments(req, { date_time: { [Op.lte]: new Date() } });
+    return res.status(200).json({ result_code: 1, appointments });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ result_code: 0, message: err.message });
+    return next(err);
+  }
+};
+
+// PATCH /api/appointments/:app_id/status
+exports.updateAppointmentStatus = async (req, res, next) => {
+  try {
+    const { app_id } = req.params;
+    const { status } = req.body;
+    const provider = req.user?.provider;
+
+    const validStatuses = ['completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ result_code: 0, message: `Status must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const appt = await Appointment.findOne({ where: { app_id } });
+    if (!appt) return res.status(404).json({ result_code: 0, message: 'Appointment not found' });
+
+    if (provider && appt.provider_id !== provider.provider_id) {
+      return res.status(403).json({ result_code: 0, message: 'Not authorized to update this appointment' });
+    }
+
+    await appt.update({ status });
+    return res.status(200).json({ result_code: 1, message: 'Appointment status updated', appointment: appt });
   } catch (err) {
     return next(err);
   }

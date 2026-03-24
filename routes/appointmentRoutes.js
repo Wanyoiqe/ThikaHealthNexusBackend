@@ -9,4 +9,10 @@ router.get('/api/appointments/upcoming', authenticateToken, appointmentControlle
 router.get('/api/appointments/past', authenticateToken, appointmentController.getPast);
 router.get('/api/appointments/all', authenticateToken, appointmentController.getAllAppointments);
 
+// Doctor-scoped routes
+router.get('/api/appointments/doctor/all', authenticateToken, appointmentController.getDoctorAll);
+router.get('/api/appointments/doctor/upcoming', authenticateToken, appointmentController.getDoctorUpcoming);
+router.get('/api/appointments/doctor/past', authenticateToken, appointmentController.getDoctorPast);
+router.patch('/api/appointments/:app_id/status', authenticateToken, appointmentController.updateAppointmentStatus);
+
 module.exports = router;

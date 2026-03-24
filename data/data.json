@@ -11,16 +11,6 @@
       "is_deleted": false
     },
     {
-      "user_id": "doc2-5555-6666-7777-888888888888",
-      "first_name": "Emily",
-      "last_name": "Achieng",
-      "email": "emily.achieng@hospital.example",
-      "password": "password",
-      "phone_number": "+254700333444",
-      "role": "doctor",
-      "is_deleted": false
-    },
-    {
       "user_id": "doc2-5555-6666-7777-999999999999",
       "first_name": "Receptionist",
       "last_name": "Hospital",
@@ -65,14 +55,6 @@
       "user_id": "doc1-1111-2222-3333-444444444444",
       "name": "Dr Daniel Kamau",
       "specialization_id": "spec-0001-0001-0001-0001",
-      "hospital_id": "hosp-1000-2000-3000",
-      "is_active": true
-    },
-    {
-      "provider_id": "prov-doc2-0002-0002-0002",
-      "user_id": "doc2-5555-6666-7777-888888888888",
-      "name": "Dr Emily Achieng",
-      "specialization_id": "spec-0002-0002-0002-0002",
       "hospital_id": "hosp-1000-2000-3000",
       "is_active": true
     },

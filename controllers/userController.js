@@ -91,7 +91,7 @@ exports.loginUser = async (req, res, next) => {
       // Check if user is deleted
       return res.status(401).json({
         result_code: 0,
-        message: "Invalid credentials.",
+        message: "Invalid email credentials.",
       });
     }
     if(foundUser.is_deleted){
@@ -102,7 +102,7 @@ exports.loginUser = async (req, res, next) => {
     }
     const isMatch = await bcrypt.compare(password, foundUser.password);
     if (!isMatch) {
-      return res.status(401).json({ result_code: 0, message: "Invalid credentials." });
+      return res.status(401).json({ result_code: 0, message: "Invalid password credentials." });
     }
 
     if (foundUser.role === 'patient') {
@@ -142,6 +142,24 @@ exports.loginUser = async (req, res, next) => {
   }
 };
  
+// Fetch authenticated user's profile
+exports.fetchProfile = async (req, res, next) => {
+  try {
+    // req.user is already hydrated by authenticateToken middleware
+    // (includes patient or provider record depending on role)
+    const user = req.user;
+
+    console.log(user);
+    return res.status(200).json({
+      result_code: 1,
+      user,
+    });
+  } catch (err) {
+    console.error('Error fetching profile:', err);
+    return next(err);
+  }
+};
+
 //test email
 exports.testEmail = async (req, res, next) => {
   try {

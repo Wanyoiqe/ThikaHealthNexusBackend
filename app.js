@@ -19,9 +19,8 @@ const app = express();
 
 app.use(helmet());
 const allowedOrigins = [
-  'http://localhost:8080',       // your React frontend (dev)
-  'http://127.0.0.1:8080',
-  'https://your-production-domain.com', // add your deployed frontend here
+  'http://localhost:3000',       // your React frontend (dev)
+  'http://127.0.0.1:3000',
   'https://thikahealth.vercel.app',     // example
 ];
 
