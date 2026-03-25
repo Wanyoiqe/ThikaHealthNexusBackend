@@ -237,3 +237,66 @@ exports.getAllDoctors = async (req, res, next) => {
     return next(err);
   }
 };
+
+// Update Profile
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { firstName, lastName, phone, gender, dateOfBirth } = req.body;
+    const user = await User.findByPk(req.user.user_id);
+    if (!user) return res.status(404).json({ result_code: 0, message: "User not found." });
+
+    if (firstName) user.first_name = firstName.trim();
+    if (lastName) user.last_name = lastName.trim();
+    if (phone) user.phone_number = phone.trim();
+    if (gender) user.gender = gender;
+    
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const ageDifMs = Date.now() - birthDate.getTime();
+      const ageDate = new Date(ageDifMs);
+      user.age = Math.abs(ageDate.getUTCFullYear() - 1970);
+    }
+
+    await user.save();
+
+    if (user.role === 'patient') {
+      const patient = await Patient.findOne({ where: { user_id: user.user_id } });
+      if (patient) {
+        patient.name = `${user.first_name} ${user.last_name}`.trim();
+        await patient.save();
+      }
+    }
+
+    return res.status(200).json({ result_code: 1, message: "Profile updated successfully.", user });
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    return next(err);
+  }
+};
+
+// Upload Profile Picture
+exports.uploadProfilePicture = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ result_code: 0, message: "No file uploaded." });
+    }
+
+    const user = await User.findByPk(req.user.user_id);
+    if (!user) {
+      return res.status(404).json({ result_code: 0, message: "User not found." });
+    }
+
+    const profileUrl = `/uploads/profile_pics/${req.file.filename}`;
+    user.profileUrl = profileUrl;
+    await user.save();
+
+    return res.status(200).json({
+      result_code: 1,
+      message: "Profile picture uploaded successfully.",
+      profileUrl: profileUrl,
+    });
+  } catch (err) {
+    console.error('Error uploading profile picture:', err);
+    return next(err);
+  }
+};
