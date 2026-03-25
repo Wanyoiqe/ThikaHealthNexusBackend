@@ -13,6 +13,7 @@ const { HealthRecordModel } = require('./healthRecords');
 const { PrescriptionModel } = require('./prescription');
 const { SpecializationModel } = require('./specializations');
 const { ConsentModel } = require('./consent');
+const { NotificationModel } = require('./notification');
 
 const sequelize = new Sequelize(
   configs.database.database,
@@ -36,6 +37,7 @@ const HealthRecord = HealthRecordModel(sequelize);
 const Prescription = PrescriptionModel(sequelize);
 const Specialization = SpecializationModel(sequelize);
 const Consent = ConsentModel(sequelize);
+const Notification = NotificationModel(sequelize);
 
 // Consent associations
 Consent.belongsTo(Provider, { foreignKey: 'provider_id' });
@@ -66,4 +68,5 @@ module.exports = {
   Prescription,
   Specialization,
   Consent,
+  Notification,
 };

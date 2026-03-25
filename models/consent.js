@@ -23,6 +23,10 @@ const ConsentModel = (sequelize) => {
       type: DataTypes.ENUM('pending', 'approved', 'denied', 'revoked'),
       defaultValue: 'pending',
     },
+    type: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     purpose: {
       type: DataTypes.TEXT,
       allowNull: false,

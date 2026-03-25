@@ -3,14 +3,15 @@ const router = Router();
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const consentController = require('../controllers/consentController');
 
-// Patient routes
-router.get('/api/consents/doctors-consent-requests', authenticateToken, consentController.getConsentDoctorsRequests);
-router.get('/active-consents', authenticateToken, consentController.getActiveConsents);
-router.post('/consent-requests/:consentId/:action', authenticateToken, consentController.handleConsentRequest);
-router.post('/consents/:consentId/revoke', authenticateToken, consentController.revokeConsent);
-
 // Doctor routes
+router.get('/api/consents/doctors-consent-requests', authenticateToken, consentController.getConsentDoctorsRequests);
 router.post('/api/consents/create', authenticateToken, consentController.createConsentRequest);
+router.get('/api/consents/:consentId/records', authenticateToken, consentController.getConsentRecords);
 
+// Patient routes
+router.get('/api/consents/active', authenticateToken, consentController.getActiveConsents);
+router.get('/api/consents/my-history', authenticateToken, consentController.getMyConsentHistory);
+router.post('/api/consents/:consentId/respond', authenticateToken, consentController.handleConsentRequest);
+router.post('/api/consents/:consentId/revoke', authenticateToken, consentController.revokeConsent);
 
 module.exports = router;

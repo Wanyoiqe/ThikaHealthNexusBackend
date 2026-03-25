@@ -19,5 +19,6 @@ router.get('/api/healthrecords/:record_id', authenticateToken, healthRecordContr
 router.get('/api/healthrecords/patient-appointments/:patient_id', authenticateToken, healthRecordController.getAppointmentsForPatient);
 router.get('/api/health-records/appointment/:appointment_id/:patient_id', authenticateToken, healthRecordController.getHealthRecordForPatientByAppointmentId);
 router.get('/api/health-records/doctor-records', authenticateToken, healthRecordController.getHealthRecordsByDoctor);
+router.put('/api/health-records/:record_id', authenticateToken, healthRecordController.updateHealthRecord);
 
 module.exports = router;

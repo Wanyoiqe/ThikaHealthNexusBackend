@@ -13,6 +13,7 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const providerRoutes = require('./routes/providerRoutes');
 const consentRoutes = require('./routes/consentRoutes');
 const healthRecordRoutes = require('./routes/healthRecordRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 
 const app = express();
@@ -45,7 +46,7 @@ app.use(
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use([dbRoute, userRoutes,appointmentRoutes,providerRoutes,consentRoutes,healthRecordRoutes]);
+app.use([dbRoute, userRoutes, appointmentRoutes, providerRoutes, consentRoutes, healthRecordRoutes, notificationRoutes]);
 
 // 404 error handling
 app.post('*', function (req, res) { // Changed to POST for consistency

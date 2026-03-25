@@ -66,6 +66,23 @@ exports.bookAppointment = async (req, res, next) => {
 
     const appointmentResponse = Object.assign({}, appt.toJSON(), { provider });
 
+    // Notify the doctor that a new appointment has been booked
+    if (provider_id && provider) {
+      try {
+        const { Notification } = require('../models');
+        await Notification.create({
+          user_id: provider.user_id,
+          type: 'appointment_booked',
+          title: 'New Appointment Booked',
+          message: `A patient has booked an appointment on ${new Date(date_time).toLocaleString()}.`,
+          related_id: appt.app_id,
+          related_type: 'appointment',
+        });
+      } catch (notifErr) {
+        console.warn('Failed to create appointment notification:', notifErr.message);
+      }
+    }
+
     return res.status(201).json({ result_code: 1, message: 'Appointment booked', appointment: appointmentResponse });
   } catch (err) {
     return next(err);
@@ -362,6 +379,11 @@ exports.updateAppointmentStatus = async (req, res, next) => {
 
     if (provider && appt.provider_id !== provider.provider_id) {
       return res.status(403).json({ result_code: 0, message: 'Not authorized to update this appointment' });
+    }
+
+    // #2 — time gate: cannot mark complete if appointment hasn't occurred yet
+    if (status === 'completed' && new Date(appt.date_time) > new Date()) {
+      return res.status(400).json({ result_code: 0, message: 'Cannot mark a future appointment as completed' });
     }
 
     await appt.update({ status });
