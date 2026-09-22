@@ -12,7 +12,7 @@ async function sendConsentRequestEmail({ patientEmail, patientName, doctorName, 
   const loginUrl = `${frontendUrl || process.env.FRONTEND_URL || 'http://localhost:8080'}/health-records`;
 
   const mailOptions = {
-    from: `"Tiba Health Center" <${process.env.EMAIL_USER}>`,
+    from: `"Thika Integrated Health Records System" <${process.env.EMAIL_USER}>`,
     to: patientEmail,
     subject: '🔒 Health Record Access Request',
     html: `
@@ -49,7 +49,7 @@ async function sendConsentRequestEmail({ patientEmail, patientName, doctorName, 
 
           <div style="background-color: #f0f4f3; padding: 20px; text-align: center; color: #777; font-size: 13px;">
             <p style="margin: 0;">
-              &copy; ${new Date().getFullYear()} <strong>Tiba Health Center</strong> — Your data, your control.
+              &copy; ${new Date().getFullYear()} <strong>Thika Integrated Health Records System</strong> — Your data, your control.
             </p>
           </div>
         </div>

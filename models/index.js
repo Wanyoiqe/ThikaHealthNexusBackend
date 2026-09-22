@@ -14,6 +14,7 @@ const { PrescriptionModel } = require('./prescription');
 const { SpecializationModel } = require('./specializations');
 const { ConsentModel } = require('./consent');
 const { NotificationModel } = require('./notification');
+const TwoFactorAuthModel = require('./twoFactorAuth'); // ✅ Fixed this line
 
 const sequelize = new Sequelize(
   configs.database.database,
@@ -38,6 +39,7 @@ const Prescription = PrescriptionModel(sequelize);
 const Specialization = SpecializationModel(sequelize);
 const Consent = ConsentModel(sequelize);
 const Notification = NotificationModel(sequelize);
+const TwoFactorAuth = TwoFactorAuthModel(sequelize, Sequelize.DataTypes);
 
 // Consent associations
 Consent.belongsTo(Provider, { foreignKey: 'provider_id' });
@@ -69,4 +71,5 @@ module.exports = {
   Specialization,
   Consent,
   Notification,
+  TwoFactorAuth,
 };

@@ -3,6 +3,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendOnboardingEmail } = require("../utils/onboardingEmail");
 const { generateToken } = require("../middlewares/authMiddleware");
+const db = require("../db");
+const { TwoFactorAuth } = require("../models");
+const { sendEmailOtp } = require("../services/emailService");
 
 // User Registration (Sign up)
 exports.registerPatient = async (req, res, next) => {
@@ -25,15 +28,23 @@ exports.registerPatient = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     let existingPatient = null;
     const newUser = await User.create({
-      first_name:firstName.trim(),
+      first_name: firstName.trim(),
       last_name: lastName.trim(),
       email: email.trim().toLowerCase(),
       password: hashedPassword.trim(),
       phone_number: phone.trim(),
-      role: userRole.trim(), 
+      role: userRole.trim(),
     });
 
     console.log('New user created:', newUser);
+
+    await TwoFactorAuth.findOrCreate({
+      where: { user_id: newUser.user_id },
+      defaults: {
+        email: newUser.email,
+        is_enabled: false,
+      },
+    });
 
     // If onboarding a patient, create a Patient record
     if (userRole === 'patient') {
@@ -58,7 +69,6 @@ exports.registerPatient = async (req, res, next) => {
       token,
     };
 
-    
     try {
       // call but don't await so login remains fast
       sendOnboardingEmail(newUser).then((ok) => {
@@ -94,7 +104,7 @@ exports.loginUser = async (req, res, next) => {
         message: "Invalid email credentials.",
       });
     }
-    if(foundUser.is_deleted){
+    if (foundUser.is_deleted) {
       return res.status(401).json({
         result_code: 0,
         message: "Account has been deactivated. Kindly contact admin.",
@@ -121,6 +131,28 @@ exports.loginUser = async (req, res, next) => {
       foundUser.dataValues.provider = provider; // attach provider record to user
     }
 
+    // 🔐 CHECK 2FA BEFORE LOGIN
+    const twoFA = await TwoFactorAuth.findOne({
+      where: { user_id: foundUser.user_id }
+    });
+
+    if (twoFA && twoFA.is_enabled) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 5 * 60 * 1000);
+
+      await twoFA.update({
+        otp_code: otp,
+        otp_expires_at: expires,
+      });
+
+      await sendEmailOtp(twoFA.email, otp);
+
+      return res.status(200).json({
+        requires2FA: true,
+        userId: foundUser.user_id,
+        message: "OTP sent to email",
+      });
+    }
 
     const token = generateToken(foundUser);
     
@@ -141,7 +173,7 @@ exports.loginUser = async (req, res, next) => {
     return next(err);
   }
 };
- 
+
 // Fetch authenticated user's profile
 exports.fetchProfile = async (req, res, next) => {
   try {
@@ -163,7 +195,7 @@ exports.fetchProfile = async (req, res, next) => {
 //test email
 exports.testEmail = async (req, res, next) => {
   try {
-    const email = req.body.email;  
+    const email = req.body.email;
     if (await sendOnboardingEmail(email)) {
       return res.status(200).json({ message: "Email sent successfully" });
     } else {
@@ -172,7 +204,6 @@ exports.testEmail = async (req, res, next) => {
   } catch (err) {
     console.error("Error sending test email:", err);
     return next(err);
-
   }
 };
 
@@ -180,7 +211,6 @@ exports.testEmail = async (req, res, next) => {
 // Get all doctors with complete details
 exports.getAllDoctors = async (req, res, next) => {
   try {
-
     const providers = await Provider.findAll({
       where: { is_deleted: false, is_active: true },
       include: [
@@ -229,7 +259,6 @@ exports.getAllDoctors = async (req, res, next) => {
         updatedAt: p.updatedAt,
       };
     });
-
 
     return res.status(200).json({ result_code: 1, doctors });
   } catch (err) {
@@ -297,6 +326,109 @@ exports.uploadProfilePicture = async (req, res, next) => {
     });
   } catch (err) {
     console.error('Error uploading profile picture:', err);
+    return next(err);
+  }
+};
+
+// ============= ADMIN CREATE USER FUNCTION =============
+// Admin creates any type of user (doctor, receptionist, admin, patient)
+exports.adminCreateUser = async (req, res, next) => {
+  console.log('adminCreateUser - Request body:', req.body);
+  
+  try {
+    const { firstName, lastName, email, phone, role, specialization } = req.body;
+    
+    // Validation
+    if (!firstName || !lastName || !email || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: firstName, lastName, email, role'
+      });
+    }
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email: email.toLowerCase() } });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'User with this email already exists.',
+      });
+    }
+    
+    // Generate temporary password
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    
+    // Create the user
+    const newUser = await User.create({
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
+      phone_number: phone ? phone.trim() : null,
+      role: role.trim(),
+      isActive: true,
+      is_deleted: false
+    });
+    
+    console.log('New user created:', newUser.toJSON());
+    
+    // If role is doctor, create Provider record
+    if (role === 'doctor') {
+      const provider = await Provider.create({
+        user_id: newUser.user_id,
+        name: `${firstName.trim()} ${lastName.trim()}`, // Doctor's full name (REQUIRED)
+        specialization: specialization || 'General Practice', // Add specialization field
+        hospital_id: null,
+        is_active: true,
+        is_deleted: false
+      });
+      console.log('Provider record created:', provider.toJSON());
+    }
+    
+    // If role is patient, create Patient record
+    if (role === 'patient') {
+      const patient = await Patient.create({
+        user_id: newUser.user_id,
+        name: `${firstName.trim()} ${lastName.trim()}`,
+      });
+      console.log('Patient record created:', patient.toJSON());
+    }
+    
+    // Create 2FA record
+    await TwoFactorAuth.findOrCreate({
+      where: { user_id: newUser.user_id },
+      defaults: {
+        email: newUser.email,
+        is_enabled: false,
+      },
+    });
+    
+    // Send welcome email with temporary password
+    try {
+      console.log(`Temporary password for ${email}: ${tempPassword}`);
+      // Uncomment below if you have email function
+      // await sendOnboardingEmail(newUser, tempPassword);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // Don't fail the request if email fails
+    }
+    
+    return res.status(201).json({
+      success: true,
+      message: `${role} created successfully`,
+      data: {
+        user_id: newUser.user_id,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        email: newUser.email,
+        role: newUser.role,
+        temporary_password: tempPassword
+      }
+    });
+    
+  } catch (err) {
+    console.error('Error in adminCreateUser:', err);
     return next(err);
   }
 };

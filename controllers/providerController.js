@@ -29,13 +29,13 @@ exports.addDoctor = async (req, res) => {
     }
 
     // Match specialization name to its ID
-        // Try to find the specialization in the DB (specializations table uses UUID primary keys)
-        let specializationRecord = await Specialization.findOne({ where: { name: specialization } });
-        // If it doesn't exist, create it so the provider can reference a valid specialization_id
-        if (!specializationRecord) {
-          specializationRecord = await Specialization.create({ name: specialization });
-        }
-        const specialization_id = specializationRecord.specialization_id;
+    // Try to find the specialization in the DB (specializations table uses UUID primary keys)
+    let specializationRecord = await Specialization.findOne({ where: { name: specialization } });
+    // If it doesn't exist, create it so the provider can reference a valid specialization_id
+    if (!specializationRecord) {
+      specializationRecord = await Specialization.create({ name: specialization });
+    }
+    const specialization_id = specializationRecord.specialization_id;
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
@@ -46,16 +46,12 @@ exports.addDoctor = async (req, res) => {
     // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // // Create doctor user account
-    // const firstName = name.split(' ')[0];
-    // const lastName = name.split(' ').slice(1).join(' ') || '';
-
     const user = await User.create({
       first_name: firstName,
       last_name: lastName,
       email,
       phone_number: phone,
-      role: 'doctor', // important for role-based login
+      role: 'doctor',
       password: hashedPassword,
     });
 
@@ -63,7 +59,7 @@ exports.addDoctor = async (req, res) => {
 
     // Create corresponding Provider entry
     const provider = await Provider.create({
-      user_id: user.user_id, // ensure FK matches your DB model
+      user_id: user.user_id,
       name,
       specialization_id,
     });
@@ -96,6 +92,208 @@ exports.getAllDoctors = async (req, res) => {
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).json({ message: "Failed to get doctors" });
+  }
+};
+
+// ============= NEW FUNCTION: UPDATE DOCTOR =============
+exports.updateDoctor = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    const { first_name, last_name, email, phone, specialization } = req.body;
+    
+    console.log('📝 Updating doctor:', providerId);
+    console.log('Update data:', req.body);
+    
+    // Find the provider with associated user
+    const provider = await Provider.findByPk(providerId, {
+      include: [{ model: User, as: 'user' }]
+    });
+    
+    if (!provider) {
+      return res.status(404).json({
+        success: false,
+        result_code: 0,
+        message: 'Doctor not found'
+      });
+    }
+    
+    // Update user information if provided
+    if (provider.user) {
+      const userUpdateData = {};
+      if (first_name) userUpdateData.first_name = first_name;
+      if (last_name) userUpdateData.last_name = last_name;
+      if (email) userUpdateData.email = email;
+      if (phone) userUpdateData.phone_number = phone;
+      
+      if (Object.keys(userUpdateData).length > 0) {
+        await provider.user.update(userUpdateData);
+      }
+    }
+    
+    // Update provider information
+    const providerUpdateData = {};
+    if (first_name || last_name) {
+      providerUpdateData.name = `${first_name || provider.user?.first_name} ${last_name || provider.user?.last_name}`.trim();
+    }
+    
+    // Update specialization if provided
+    if (specialization) {
+      let specializationRecord = await Specialization.findOne({ where: { name: specialization.toLowerCase() } });
+      if (!specializationRecord) {
+        specializationRecord = await Specialization.create({ name: specialization.toLowerCase() });
+      }
+      providerUpdateData.specialization_id = specializationRecord.specialization_id;
+    }
+    
+    if (Object.keys(providerUpdateData).length > 0) {
+      await provider.update(providerUpdateData);
+    }
+    
+    // Fetch updated provider with user
+    const updatedProvider = await Provider.findByPk(providerId, {
+      include: [{ model: User, as: 'user' }]
+    });
+    
+    console.log('✅ Doctor updated successfully');
+    
+    return res.status(200).json({
+      success: true,
+      result_code: 1,
+      message: 'Doctor updated successfully',
+      data: {
+        provider_id: updatedProvider.provider_id,
+        user_id: updatedProvider.user?.user_id,
+        first_name: updatedProvider.user?.first_name,
+        last_name: updatedProvider.user?.last_name,
+        full_name: updatedProvider.name,
+        email: updatedProvider.user?.email,
+        phone_number: updatedProvider.user?.phone_number,
+        specialization: specialization || updatedProvider.specialization?.name
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error updating doctor:', error);
+    res.status(500).json({
+      success: false,
+      result_code: 0,
+      message: 'Failed to update doctor',
+      error: error.message
+    });
+  }
+};
+
+// ============= NEW FUNCTION: DELETE DOCTOR (SOFT DELETE) =============
+exports.deleteDoctor = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    
+    console.log('🗑️ Deleting doctor:', providerId);
+    
+    // Find the provider
+    const provider = await Provider.findByPk(providerId, {
+      include: [{ model: User, as: 'user' }]
+    });
+    
+    if (!provider) {
+      return res.status(404).json({
+        success: false,
+        result_code: 0,
+        message: 'Doctor not found'
+      });
+    }
+    
+    // Soft delete - mark as deleted and inactive
+    await provider.update({
+      is_deleted: true,
+      is_active: false
+    });
+    
+    // Also soft delete the user
+    if (provider.user) {
+      await provider.user.update({
+        is_deleted: true,
+        isActive: false
+      });
+    }
+    
+    console.log('✅ Doctor deleted successfully');
+    
+    return res.status(200).json({
+      success: true,
+      result_code: 1,
+      message: 'Doctor removed successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error deleting doctor:', error);
+    res.status(500).json({
+      success: false,
+      result_code: 0,
+      message: 'Failed to delete doctor',
+      error: error.message
+    });
+  }
+};
+
+// ============= NEW FUNCTION: GET SINGLE DOCTOR BY ID =============
+exports.getDoctorById = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    
+    console.log('🔍 Fetching doctor:', providerId);
+    
+    const provider = await Provider.findByPk(providerId, {
+      include: [
+        { 
+          model: User, 
+          as: 'user',
+          attributes: ['user_id', 'first_name', 'last_name', 'email', 'phone_number', 'profileUrl']
+        },
+        {
+          model: Specialization,
+          as: 'specialization',
+          attributes: ['specialization_id', 'name']
+        }
+      ],
+      where: { is_deleted: false }
+    });
+    
+    if (!provider) {
+      return res.status(404).json({
+        success: false,
+        result_code: 0,
+        message: 'Doctor not found'
+      });
+    }
+    
+    const doctorData = {
+      provider_id: provider.provider_id,
+      user_id: provider.user?.user_id,
+      first_name: provider.user?.first_name,
+      last_name: provider.user?.last_name,
+      full_name: provider.name,
+      email: provider.user?.email,
+      phone_number: provider.user?.phone_number,
+      specialization: provider.specialization?.name || 'General Practice',
+      profileUrl: provider.user?.profileUrl,
+      is_active: provider.is_active
+    };
+    
+    return res.status(200).json({
+      success: true,
+      result_code: 1,
+      data: doctorData
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching doctor:', error);
+    res.status(500).json({
+      success: false,
+      result_code: 0,
+      message: 'Failed to fetch doctor',
+      error: error.message
+    });
   }
 };
 
@@ -132,18 +330,8 @@ exports.getDoctorsPatients = async (req, res, next) => {
       });
     }
 
-    // console.log('Appointments fetched:', appointments);
-
     const patientIds = [...new Set(appointments.map(app => app.patient_id))];
     console.log('Unique patient IDs:', patientIds);
-
-    // const PatientId = patientIds[0];
-    // console.log('Sample Patient ID:', PatientId);
-
-    // const patient = await Patient.findOne({
-    //   where: { patient_id: PatientId },
-    // });
-    // console.log('Sample Patient fetched:', patient);
 
     const allPatients = await Patient.findAll({
       where: {
@@ -174,11 +362,10 @@ exports.getDoctorsPatients = async (req, res, next) => {
     
     return res.status(200).json({ result_code: 1, patients });
   } catch (err) {
-    console.error('Error in getAllDoctors:', err);
+    console.error('Error in getDoctorsPatients:', err);
     return next(err);
   }
 };
-
 
 exports.getReceptionistDashboardDetails = async (req, res, next) => {
   try {
@@ -211,7 +398,7 @@ exports.getReceptionistDashboardDetails = async (req, res, next) => {
     };
     return res.status(200).json({ result_code: 1, data });
   } catch (err) {
-    console.error('Error in getAllDoctors:', err);
+    console.error('Error in getReceptionistDashboardDetails:', err);
     return next(err);
   }
 };

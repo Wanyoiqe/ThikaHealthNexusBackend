@@ -14,7 +14,8 @@ const providerRoutes = require('./routes/providerRoutes');
 const consentRoutes = require('./routes/consentRoutes');
 const healthRecordRoutes = require('./routes/healthRecordRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-
+const twoFactorRoutes = require('./routes/twoFactorRoutes');
+const hospitalRoutes = require('./routes/hospitalRoutes');
 
 const app = express();
 
@@ -22,7 +23,7 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:3000',       // your React frontend (dev)
   'http://127.0.0.1:3000',
-  'https://thikahealth.vercel.app',     // example
+  'https://thika-health-nexus-635mdjfbm-blairrr.vercel.app',     // example
 ];
 
 app.use(
@@ -47,7 +48,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
-app.use([dbRoute, userRoutes, appointmentRoutes, providerRoutes, consentRoutes, healthRecordRoutes, notificationRoutes]);
+app.use('/api/admin/hospitals', hospitalRoutes);
+app.use([dbRoute, userRoutes, appointmentRoutes, providerRoutes, consentRoutes, healthRecordRoutes, notificationRoutes, twoFactorRoutes]);
+
+
 
 // 404 error handling
 app.post('*', function (req, res) { // Changed to POST for consistency
